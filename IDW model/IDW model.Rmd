@@ -14,6 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r libraries}
 
 library(tidyverse)
+library(readxl)
 
 ```
 
@@ -78,7 +79,12 @@ ARB 14 & 38 Riebli sites have incorrect GPS data???
 
 ```{r load short term pm 2.5 data}
 
-
+st_files <- list.files("../data/short_term_pm25", full.names = TRUE)
+short_term_pm25 <- lapply(st_files, function(x) read_xlsx(x))
+names(short_term_pm25) <- str_sub(st_files, 42, -20)
+for (i in 1:length(short_term_pm25)) short_term_pm25[[i]] <- mutate(short_term_pm25[[i]], name = names(short_term_pm25[i]))
+short_term_pm25 <- do.call(rbind, short_term_pm25)
+short_term_pm25 <- select(short_term_pm25, name, everything())
 
 ```
 
