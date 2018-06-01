@@ -72,7 +72,7 @@ ggplot(NULL, aes(long, lat)) +
 
 We're lacking sensors to the northwest of the sites, but we have a good number to the southeast (Vacaville, Vallejo, Berkeley, SF, Oakland).
 
-ARB 14 Riebli site has incorrect GPS data???
+ARB 14 & 38 Riebli sites have incorrect GPS data???
 
 # PM 2.5 data setup
 
