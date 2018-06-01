@@ -16,6 +16,9 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(readxl)
 library(lubridate)
+library(maps)
+library(gstat)
+library(sp)
 
 ```
 
@@ -68,7 +71,8 @@ ggplot(NULL, aes(long, lat)) +
   geom_text(data = aq_sensors, color = "black", alpha = .3, aes(label = name), hjust = "inward", vjust = "inward", size = 3) +
   geom_point(data = farms, color = "red") +
   geom_text(data = farms, color = "red", alpha = .3, aes(label = Key), hjust = "inward", vjust = "inward", size = 3) +
-  coord_fixed()
+  borders("state", "California") +
+  coord_fixed(xlim = c(-123.5,-121.5), ylim = c(37.5, 39.5))
 
 ```
 
@@ -80,8 +84,21 @@ ARB 14 & 38 Riebli sites have incorrect GPS data???
 
 ```{r fix}
 
+#values from Google Maps
 aq_sensors[grep("Riebli", aq_sensors$name),]$lat <- 38.500
 aq_sensors[grep("Riebli", aq_sensors$name),]$long <- -122.741
+
+```
+
+```{r remap}
+
+ggplot(NULL, aes(long, lat)) +
+  geom_point(data = aq_sensors) +
+  geom_text(data = aq_sensors, color = "black", alpha = .3, aes(label = name), hjust = "inward", vjust = "inward", size = 3) +
+  geom_point(data = farms, color = "red") +
+  geom_text(data = farms, color = "red", alpha = .3, aes(label = Key), hjust = "inward", vjust = "inward", size = 3) +
+  borders("state", "California") +
+  coord_fixed(xlim = c(-123.5,-121.5), ylim = c(37.5, 39.5))
 
 ```
 
@@ -122,7 +139,7 @@ aq_sensors$key <- str_sub(aq_sensors$name, end = 10)
 long_term_pm25$key <- str_sub(long_term_pm25$name, end = 10)
 short_term_pm25$key <- str_sub(short_term_pm25$name, end = 10)
 
-length(sort(unique(aq_sensors$key))==sort(c(unique(long_term_pm25$key), unique(short_term_pm25$key))))
+sum(sort(unique(aq_sensors$key))==sort(c(unique(long_term_pm25$key), unique(short_term_pm25$key))))
 
 #pull out and match up essential columns for purpose of rowbinding and joining
 
@@ -136,14 +153,134 @@ t2<-long_term_pm25 %>%
 
 pm25 <- rbind(t1, t2)
 
-pm25 <- left_join(pm25, aq_sensors, "key")
+pm25 <- pm25 %>% 
+  left_join(aq_sensors, "key") %>%
+  select(-name.y) %>%
+  rename(name = name.x)
+
+rm(list = c("aq_sensors","long_term_pm25","short_term_pm25","t1","t2"))
+
+#Filter out negative values and zero values as they could be errors and should be bounded by small nummbers (safe)
+#Also filter out some Vacaville values that appear to be errors (>900 ug/m3)
+
+pm25 <- pm25 %>%
+  filter(value>=0, value<900)
 
 ```
 
+# convert lat/long to kilometers for all data
+
+Data from http://www.csgnetwork.com/degreelenllavcalc.html
+
+```{r}
+
+farms<- farms %>%
+  mutate(northing_km = 111.005*(lat-38.5), easting_km = 87.233*(long+122.75))
+
+pm25 <- pm25 %>%
+  mutate(northing_km = 111.005*(lat-38.5), easting_km = 87.233*(long+122.75))
+
+ggplot(NULL, aes(easting_km, northing_km)) +
+  geom_point(data = distinct(pm25,long,lat,.keep_all=TRUE)) +
+  geom_text(data = distinct(pm25,long,lat,.keep_all=TRUE), color = "black", alpha = .3, aes(label = name), hjust = "inward", vjust = "inward", size = 3) +
+  geom_point(data = farms, color = "red") +
+  geom_text(data = farms, color = "red", alpha = .3, aes(label = Key), hjust = "inward", vjust = "inward", size = 3) +
+  coord_fixed(xlim=c(-110,110),ylim=c(-110,110))
+
+```
+
+
+Q for Vanessa: any idea as to where the epicenter of burned industrial facilities was? That would have some significance for our choice of GPS location.
+
+Currently using Larkfield-Wikiup for convenience (even lat/long)
+
 # graphs of sensor data
+
+```{r graph}
+
+pm25 %>%
+  filter(datetime>as.Date("2017-10-1"), datetime<as.Date("2017-10-31")) %>%
+  group_by(name) %>%
+  ggplot(aes(datetime, value, color = name)) +
+  geom_point(alpha = .2) +
+  theme(legend.position = "none")
+
+```
+
+The only long term and short term sensors in close proximity were the Napa ones. Let's compare:
+
+```{r napa comparison}
+
+#Set to start on Oct 12 because that's when the short term Napa sensor was placed
+pm25 %>%
+  filter(datetime>as.Date("2017-10-12"), datetime<as.Date("2017-10-31"), str_detect(name, "Nap")) %>%
+  group_by(name) %>%
+  ggplot(aes(datetime, value, color = name)) +
+  geom_smooth()
+
+```
+
+Reasonably similar, especially given their slight geographic distance.
+
+# stats on October sensor data
+
+```{r stats}
+
+pm25 %>%
+  filter(datetime>as.Date("2017-10-1"), datetime<as.Date("2017-10-31")) %>%
+  group_by(name) %>%
+  summarize("n of measurements" = n(), mean = mean(value), min = min(value), Q1 = quantile(value, .25), median = median(value), Q3 = quantile(value, .75), max = max(value)) %>%
+  arrange(desc(mean))
+
+```
+
+# sensor data coverage in October
+
+```{r heatmap}
+
+#going to go with a range of 10/2-10/30 because sensors are running more or less dependably on that span
+
+pm25 %>%
+  filter(datetime>as.Date("2017-10-2"), datetime<as.Date("2017-10-30")) %>%
+  group_by(name) %>%
+  ggplot(aes(x = name, y = datetime)) +
+  geom_raster(aes(fill = value)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
+
+```{r count over time graph}
+
+pm25 %>%
+  filter(datetime>as.Date("2017-10-2"), datetime<as.Date("2017-10-30")) %>%
+  group_by(datetime) %>%
+  summarise(n = n()) %>%
+  ggplot(aes(datetime, n)) +
+  geom_line()
+
+```
+
 
 # model function
 
+```{r IDW model}
+
+IDW <- function(data = pm25, start_time = "2017-10-2", end_time = "2017-10-30", xlim = c(), ylim = c()) {
+  for (i in seq.POSIXt(as.POSIXct(start_time), as.POSIXct(end_time), "hour")) {
+    
+    timepoint <- data %>%
+      filter(datetime==i)
+    
+    idw0(value~1, data = timepoint)
+      
+  }
+}
+
+```
+
+
 # run model
 
-# model plots
+# model analysis and plots
+
+# get values for farms
