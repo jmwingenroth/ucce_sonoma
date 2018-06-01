@@ -48,17 +48,18 @@ colnames(aq_sensors)[3:4] <- c("lat", "long")
 
 # map with farm sites and aq sensors
 
-```{r map}
+```{r map, fig.width=8, fig.height=8}
 
 ggplot(NULL, aes(long, lat)) +
   geom_point(data = aq_sensors) +
-  geom_text(data = aq_sensors, aes(label = name), hjust = "inward", vjust = "inward", size = 2.5) +
-  geom_point(data = farms, aes(color = "red")) +
-  geom_text(data = farms, aes(label = Key, color = "red"), hjust = "inward", vjust = "inward", size = 2.5)
+  geom_text(data = aq_sensors, color = "black", alpha = .3, aes(label = name), hjust = "inward", vjust = "inward", size = 3) +
+  geom_point(data = farms, color = "red") +
+  geom_text(data = farms, color = "red", alpha = .3, aes(label = Key), hjust = "inward", vjust = "inward", size = 3) +
+  coord_fixed(xlim = c(-123, -122.5), ylim = c(38.15, 38.65))
 
 ```
 
-We're lacking sensors to the northwest of the sites.
+We're lacking sensors to the northwest of the sites, but we have a good number to the southeast (Vacaville, Vallejo, Berkeley, SF, Oakland).
 
 # model function
 
