@@ -19,12 +19,12 @@ library(tidyverse)
 
 # geographic data setup
 
-```{r load data}
+It seemed to make the most sense to load the pm 2.5 data from longterm sensors at the same time since the lat/long was included in the same table. The pm 2.5 dataset was a large file (10 MB) since it included all October data for the entire state, so I filtered it to only include sites within ~1 deg of the centerpoint of sampling sites in Excel prior to adding to the project.
+
+```{r load farm and sensor geographic data}
 
 st_sensors <- read_csv(file = "../data/aq_sensors.csv")
 st_sensors <- filter(st_sensors, `sensor class` == "short_term")
-
-#the pm 2.5 dataset was a large file (10 MB), so I filtered it to only include sites within ~1 deg of the centerpoint of sampling sites in Excel prior to adding to project
 
 long_term_pm25 <- read_csv("../data/long_term_pm25.csv")
 lt_sensors <-long_term_pm25 %>%
@@ -72,9 +72,11 @@ ggplot(NULL, aes(long, lat)) +
 
 We're lacking sensors to the northwest of the sites, but we have a good number to the southeast (Vacaville, Vallejo, Berkeley, SF, Oakland).
 
+ARB 14 Riebli site has incorrect GPS data???
+
 # PM 2.5 data setup
 
-```{r load pm 2.5 data}
+```{r load short term pm 2.5 data}
 
 
 
