@@ -7,7 +7,7 @@ output: html_document
 
 ```{r knitr opts, include=FALSE}
 
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
 
 ```
 
@@ -269,7 +269,7 @@ pm25 %>%
 
 myIDW <- function(data = pm25, start_time = "2017-10-2", end_time = "2017-10-30",
                 xmin = -110, xmax = 110, xinc = 1, ymin = -110, ymax = 110, yinc = 1,
-                idp = 1, nmax = 10) {
+                idp = 2, nmax = Inf, mdist = NULL) {
   
   stack <- list()
   
@@ -291,7 +291,7 @@ myIDW <- function(data = pm25, start_time = "2017-10-2", end_time = "2017-10-30"
     
     j <- j+1
     
-    stack[[j]] <- as_tibble(idw(value~1, locations = timepoint, newdata = grid, idp = idp, nmax = nmax))
+    stack[[j]] <- as_tibble(idw(value~1, locations = timepoint, newdata = grid, idp = idp, nmax = nmax, maxdist = mdist))
     stack[[j]][4] <- as.POSIXct(start_time) + 3600*(j-1)
     colnames(stack[[j]]) <- c("easting_km", "northing_km", "value", "datetime")
     
@@ -306,20 +306,17 @@ myIDW <- function(data = pm25, start_time = "2017-10-2", end_time = "2017-10-30"
 ```
 
 
-# run model
+# with napa data
 
-```{r}
+```{r model run, results="hide"}
 
-krige <- myIDW(xmin = -30, xmax = 30, xinc = 3, ymin = -30, ymax = 30, yinc = 3, idp = 1, nmax = 3)
+krige <- myIDW(xmin = -30, xmax = 30, xinc = 3, ymin = -40, ymax = 20, yinc = 3, mdist = 55, idp = 1.5)
 
 krige <- do.call(rbind, krige)
 
 ```
 
-
-# model analysis and plots
-
-```{r}
+```{r plot, fig.width=8, fig.height=8}
 
 krige %>%
   group_by(northing_km, easting_km) %>%
@@ -327,7 +324,9 @@ krige %>%
   ggplot(aes(easting_km, northing_km)) +
   geom_raster(aes(fill = s)) +
   geom_contour(aes(z = s), bins = 20, color = "white") +
-  geom_point(data = farms, aes(farms$easting_km, farms$northing_km), color = "red")
+  geom_point(data = farms, aes(farms$easting_km, farms$northing_km), color = "red") +
+  geom_point(data = distinct(pm25,lat,long,.keep_all=TRUE), aes(easting_km, northing_km), color = "green") +
+  coord_fixed(xlim=c(-40,40),ylim=c(-50,30))
 
 ```
 
