@@ -21,6 +21,7 @@ library(gstat)
 library(animation)
 library(gganimate)
 library(sp)
+library(knitr)
 
 ```
 
@@ -209,6 +210,8 @@ pm25 %>%
 
 ```
 
+From this, I've arrived at the conclusion that Oct 8 - Oct 20 is a good span for the model run in order to capture the most serious part of the fire.
+
 The only long term and short term sensors in close proximity were the Napa ones. Let's compare:
 
 ```{r napa comparison}
@@ -218,7 +221,8 @@ pm25 %>%
   filter(datetime>as.Date("2017-10-12"), datetime<as.Date("2017-10-31"), str_detect(name, "Nap")) %>%
   group_by(name) %>%
   ggplot(aes(datetime, value, color = name)) +
-  geom_smooth()
+  geom_smooth() +
+  geom_point()
 
 ```
 
@@ -267,7 +271,7 @@ pm25 %>%
 
 ```{r IDW model}
 
-myIDW <- function(data = pm25, start_time = "2017-10-2", end_time = "2017-10-30",
+myIDW <- function(data = pm25, start_time = "2017-10-08", end_time = "2017-10-20",
                 xmin = -110, xmax = 110, xinc = 1, ymin = -110, ymax = 110, yinc = 1,
                 idp = 2, nmax = Inf, mdist = NULL) {
   
@@ -293,7 +297,7 @@ myIDW <- function(data = pm25, start_time = "2017-10-2", end_time = "2017-10-30"
     
     stack[[j]] <- as_tibble(idw(value~1, locations = timepoint, newdata = grid, idp = idp, nmax = nmax, maxdist = mdist))
     stack[[j]][4] <- as.POSIXct(start_time) + 3600*(j-1)
-    colnames(stack[[j]]) <- c("easting_km", "northing_km", "value", "datetime")
+    colnames(stack[[j]]) <- c("raster_x", "raster_y", "value", "datetime")
     
     print(j)
     
@@ -306,29 +310,195 @@ myIDW <- function(data = pm25, start_time = "2017-10-2", end_time = "2017-10-30"
 ```
 
 
-# with napa data
+# With all sensors
 
-```{r model run, results="hide"}
+```{r all sensors model run, results="hide"}
 
-krige <- myIDW(xmin = -30, xmax = 30, xinc = 3, ymin = -40, ymax = 20, yinc = 3, mdist = 55, idp = 1.5)
+krige <- myIDW(xmin = -30, xmax = 30, xinc = 1, ymin = -40, ymax = 20, yinc = 1, mdist = 55, idp = 1.5)
 
 krige <- do.call(rbind, krige)
 
+cumul <- krige %>%
+  group_by(raster_x, raster_y) %>%
+  summarize(s = sum(value))
+
 ```
 
-```{r plot, fig.width=8, fig.height=8}
+```{r all sensors plot, fig.width=8, fig.height=8}
 
-krige %>%
-  group_by(northing_km, easting_km) %>%
-  summarize(s = sum(value)) %>%
-  ggplot(aes(easting_km, northing_km)) +
+cumul %>%
+  ggplot(aes(raster_x, raster_y)) +
   geom_raster(aes(fill = s)) +
   geom_contour(aes(z = s), bins = 20, color = "white") +
   geom_point(data = farms, aes(farms$easting_km, farms$northing_km), color = "red") +
   geom_point(data = distinct(pm25,lat,long,.keep_all=TRUE), aes(easting_km, northing_km), color = "green") +
+  geom_text(data = distinct(pm25,lat,long,.keep_all=TRUE), aes(easting_km, northing_km, label = key), color = "white") +
   coord_fixed(xlim=c(-40,40),ylim=c(-50,30))
 
 ```
 
+```{r all sensors farm data}
 
-# get values for farms
+farms <- farms %>%
+  mutate(raster_x = round(easting_km), raster_y = round(northing_km)) %>%
+  left_join(rename(cumul, "allpm25" = s), c("raster_x", "raster_y"))
+
+```
+
+# Controlling for Napa interference:
+## Including only local sensors
+
+```{r local sensors model run, results="hide"}
+
+krige <- myIDW(data = filter(pm25, abs(easting_km)<30, northing_km>-40, northing_km<20),
+               xmin = -30, xmax = 30, xinc = 1, ymin = -40, ymax = 20, yinc = 1, mdist = 55, idp = 1.5)
+
+krige <- do.call(rbind, krige)
+
+cumul <- krige %>%
+  group_by(raster_x, raster_y) %>%
+  summarize(s = sum(value))
+
+```
+
+```{r local sensors plot, fig.width=8, fig.height=8}
+
+cumul %>%
+  ggplot(aes(raster_x, raster_y)) +
+  geom_raster(aes(fill = s)) +
+  geom_contour(aes(z = s), bins = 20, color = "white") +
+  geom_point(data = farms, aes(farms$easting_km, farms$northing_km), color = "red") +
+  geom_point(data = distinct(pm25,lat,long,.keep_all=TRUE), aes(easting_km, northing_km), color = "green") +
+  geom_text(data = distinct(pm25,lat,long,.keep_all=TRUE), aes(easting_km, northing_km, label = key), color = "white") +
+  coord_fixed(xlim=c(-40,40),ylim=c(-50,30))
+
+```
+
+```{r local sensors farm data}
+
+farms <- farms %>%
+  mutate(raster_x = round(easting_km), raster_y = round(northing_km)) %>%
+  left_join(rename(cumul, "localpm25" = s), c("raster_x", "raster_y"))
+
+```
+
+# Controlling for false negatives:
+## Including only measurements above 5 ug/m3 (well below pre-fire background level)
+
+This can sort of be thought of as a worst-case scenario. It might also cut down on the bias from the Napa sensor.
+
+```{r false negs model run, results="hide"}
+
+krige <- myIDW(data = filter(pm25, value>5),
+               xmin = -30, xmax = 30, xinc = 1, ymin = -40, ymax = 20, yinc = 1, mdist = 55, idp = 1.5)
+
+krige <- do.call(rbind, krige)
+
+cumul <- krige %>%
+  group_by(raster_x, raster_y) %>%
+  summarize(s = sum(value, na.rm = TRUE))
+
+```
+
+```{r false negs plot, fig.width=8, fig.height=8}
+
+cumul %>%
+  ggplot(aes(raster_x, raster_y)) +
+  geom_raster(aes(fill = s)) +
+  geom_contour(aes(z = s), bins = 20, color = "white") +
+  geom_point(data = farms, aes(farms$easting_km, farms$northing_km), color = "red") +
+  geom_point(data = distinct(pm25,lat,long,.keep_all=TRUE), aes(easting_km, northing_km), color = "green") +
+  geom_text(data = distinct(pm25,lat,long,.keep_all=TRUE), aes(easting_km, northing_km, label = key), color = "white") +
+  coord_fixed(xlim=c(-40,40),ylim=c(-50,30))
+
+```
+
+```{r false negs farm data}
+
+farms <- farms %>%
+  mutate(raster_x = round(easting_km), raster_y = round(northing_km)) %>%
+  left_join(rename(cumul, "falsenegspm25" = s), c("raster_x", "raster_y"))
+
+```
+
+# Finally, applying the false negative removal to the local data
+
+```{r both model run, results="hide"}
+
+#had to use 0 for value to avoid model crashing (not totally sure why)
+krige <- myIDW(data = filter(pm25, value>0, abs(easting_km)<30, northing_km>-40, northing_km<20),
+               xmin = -30, xmax = 30, xinc = 1, ymin = -40, ymax = 20, yinc = 1, mdist = 55, idp = 1.5)
+
+krige <- do.call(rbind, krige)
+
+cumul <- krige %>%
+  group_by(raster_x, raster_y) %>%
+  summarize(s = sum(value, na.rm = TRUE))
+
+```
+
+```{r both plot, fig.width=8, fig.height=8}
+
+cumul %>%
+  ggplot(aes(raster_x, raster_y)) +
+  geom_raster(aes(fill = s)) +
+  geom_contour(aes(z = s), bins = 20, color = "white") +
+  geom_point(data = farms, aes(farms$easting_km, farms$northing_km), color = "red") +
+  geom_point(data = distinct(pm25,lat,long,.keep_all=TRUE), aes(easting_km, northing_km), color = "green") +
+  geom_text(data = distinct(pm25,lat,long,.keep_all=TRUE), aes(easting_km, northing_km, label = key), color = "white") +
+  coord_fixed(xlim=c(-40,40),ylim=c(-50,30))
+
+```
+
+```{r both farm data}
+
+farms <- farms %>%
+  mutate(raster_x = round(easting_km), raster_y = round(northing_km)) %>%
+  left_join(rename(cumul, "localpm25above0" = s), c("raster_x", "raster_y"))
+
+```
+
+# Analyzing farm data
+
+```{r tidy and print farm data}
+
+farms <- farms %>%
+  mutate(aq_norm = allpm25/max(allpm25), 
+         local_norm = localpm25/max(localpm25), 
+         pos_norm = falsenegspm25/max(falsenegspm25), 
+         both_norm = localpm25above0/max(localpm25above0)) %>%
+  select(Key, address, 
+         HYSPLIT_raw = `Exposure (raw, final model, normalized)`, 
+         HYSPLIT_smooth = `Exposure (smoothed, final model, normalized)`,
+         all_sensors = aq_norm,
+         local_sensors = local_norm,
+         wo_false_negs = pos_norm,
+         local_wo_false_negs = both_norm)
+
+kable(farms, digits = 5)
+
+```
+
+
+## Correlations between HYSPLIT and AQ sensor data
+
+```{r pairs, fig.width=8, fig.height=8}
+pairs(farms[,3:8])
+```
+
+HYSPLIT and the air quality sensors just seem to be irreconciliably at odds.
+
+# Perhaps this has all been too complicated. A simplistic approach to close with.
+
+```{r data exploration}
+
+pm25 %>%
+  filter(datetime>as.Date("2017-10-8"), datetime<as.Date("2017-10-20"), abs(easting_km)<30, northing_km>-40, northing_km<20) %>%
+  group_by(name) %>%
+  ggplot(aes(x = name, y = datetime)) +
+  geom_raster(aes(fill = value)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
+
+Rincon Valley Middle School and the Sebastopol station recorded the most consistently high air quality measurements. If we have samples to spare, or if we just want to toss out the model, which might have been overkill to begin with, maybe choosing the closest farm to each of these locations would be a good idea.
