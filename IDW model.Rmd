@@ -6,10 +6,10 @@ output: html_document
 ---
 
 ```{r knitr opts, include=FALSE}
+
 knitr::opts_chunk$set(echo = TRUE)
+
 ```
-
-
 
 ```{r libraries}
 
@@ -17,9 +17,9 @@ library(tidyverse)
 
 ```
 
-# data setup
+# geographic data setup
 
-```{r load data}
+```{r load geographic data}
 
 aq_sensors <- read_csv(file = "aq_sensors.csv")
 farms <- read_csv(file = "farm_data.csv")
@@ -28,6 +28,37 @@ hysplit <- readxl::read_xlsx(path = "HYSPLIT_data.xlsx")
 all(sort(hysplit$Address)==sort(farms$address))
     
 ```
+
+```{r tidy geographic data}
+
+#farm
+
+farms <- left_join(farms, hysplit, by = c("address" = "Address"))
+
+farms <- farms %>%
+  select(address, Key, long, lat, `Exposure (raw, final model, normalized)`, `Exposure (smoothed, final model, normalized)`, `Rank (raw)`, `Rank (smoothed)`)
+
+rm(list = "hysplit")
+
+#aq_sensors
+
+colnames(aq_sensors)[3:4] <- c("lat", "long")
+
+```
+
+# map with farm sites and aq sensors
+
+```{r map}
+
+ggplot(NULL, aes(long, lat)) +
+  geom_point(data = aq_sensors) +
+  geom_text(data = aq_sensors, aes(label = name), hjust = "inward", vjust = "inward", size = 2.5) +
+  geom_point(data = farms, aes(color = "red")) +
+  geom_text(data = farms, aes(label = Key, color = "red"), hjust = "inward", vjust = "inward", size = 2.5)
+
+```
+
+We're lacking sensors to the northwest of the sites.
 
 # model function
 
