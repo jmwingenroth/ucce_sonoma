@@ -18,6 +18,8 @@ library(readxl)
 library(lubridate)
 library(maps)
 library(gstat)
+library(animation)
+library(gganimate)
 library(sp)
 
 ```
@@ -50,7 +52,7 @@ all(sort(hysplit$Address)==sort(farms$address))
 farms <- left_join(farms, hysplit, by = c("address" = "Address"))
 
 farms <- farms %>%
-  select(address, Key, long, lat, `Exposure (raw, final model, normalized)`, `Exposure (smoothed, final model, normalized)`, `Rank (raw)`, `Rank (smoothed)`)
+  dplyr::select(address, Key, long, lat, `Exposure (raw, final model, normalized)`, `Exposure (smoothed, final model, normalized)`, `Rank (raw)`, `Rank (smoothed)`)
 
 rm(list = "hysplit")
 
@@ -112,7 +114,7 @@ short_term_pm25 <- lapply(st_files, function(x) read_xlsx(x))
 names(short_term_pm25) <- str_sub(st_files, 42, -20)
 for (i in 1:length(short_term_pm25)) short_term_pm25[[i]] <- mutate(short_term_pm25[[i]], name = names(short_term_pm25[i]))
 short_term_pm25 <- do.call(rbind, short_term_pm25)
-short_term_pm25 <- select(short_term_pm25, name, everything())
+short_term_pm25 <- dplyr::select(short_term_pm25, name, everything())
 
 sort(unique(short_term_pm25$name))==sort(aq_sensors[aq_sensors$`sensor class`=="short_term",]$name)
 
@@ -144,10 +146,10 @@ sum(sort(unique(aq_sensors$key))==sort(c(unique(long_term_pm25$key), unique(shor
 #pull out and match up essential columns for purpose of rowbinding and joining
 
 t1<-short_term_pm25 %>%
-  select(key, name, datetime, value = ConcHr)
+  dplyr::select(key, name, datetime, value = ConcHr)
 
 t2<-long_term_pm25 %>%
-  select(key, name, datetime, value)
+  dplyr::select(key, name, datetime, value)
 
 #rowbind and join to gps data
 
@@ -155,7 +157,7 @@ pm25 <- rbind(t1, t2)
 
 pm25 <- pm25 %>% 
   left_join(aq_sensors, "key") %>%
-  select(-name.y) %>%
+  dplyr::select(-name.y) %>%
   rename(name = name.x)
 
 rm(list = c("aq_sensors","long_term_pm25","short_term_pm25","t1","t2"))
@@ -192,7 +194,7 @@ ggplot(NULL, aes(easting_km, northing_km)) +
 
 Q for Vanessa: any idea as to where the epicenter of burned industrial facilities was? That would have some significance for our choice of GPS location.
 
-Currently using Larkfield-Wikiup for convenience (even lat/long)
+Currently using Larkfield-Wikiup for convenience (quarter-degree lat/long)
 
 # graphs of sensor data
 
@@ -265,15 +267,40 @@ pm25 %>%
 
 ```{r IDW model}
 
-IDW <- function(data = pm25, start_time = "2017-10-2", end_time = "2017-10-30", xlim = c(), ylim = c()) {
+myIDW <- function(data = pm25, start_time = "2017-10-2", end_time = "2017-10-30",
+                xmin = -110, xmax = 110, xinc = 1, ymin = -110, ymax = 110, yinc = 1,
+                idp = 1, nmax = 10) {
+  
+  stack <- list()
+  
+  j <- 0
+  
+  grid <- expand.grid(x = seq(xmin, xmax, xinc),
+                      y = seq(ymin, ymax, yinc))
+  
+  coordinates(grid) <- ~x+y
+  
+  gridded(grid) <- TRUE
+  
   for (i in seq.POSIXt(as.POSIXct(start_time), as.POSIXct(end_time), "hour")) {
     
     timepoint <- data %>%
       filter(datetime==i)
     
-    idw0(value~1, data = timepoint)
-      
+    coordinates(timepoint) <- ~easting_km+northing_km
+    
+    j <- j+1
+    
+    stack[[j]] <- as_tibble(idw(value~1, locations = timepoint, newdata = grid, idp = idp, nmax = nmax))
+    stack[[j]][4] <- as.POSIXct(start_time) + 3600*(j-1)
+    colnames(stack[[j]]) <- c("easting_km", "northing_km", "value", "datetime")
+    
+    print(j)
+    
   }
+  
+  return(stack)
+  
 }
 
 ```
@@ -281,6 +308,28 @@ IDW <- function(data = pm25, start_time = "2017-10-2", end_time = "2017-10-30", 
 
 # run model
 
+```{r}
+
+krige <- myIDW(xmin = -30, xmax = 30, xinc = 3, ymin = -30, ymax = 30, yinc = 3, idp = 1, nmax = 3)
+
+krige <- do.call(rbind, krige)
+
+```
+
+
 # model analysis and plots
+
+```{r}
+
+krige %>%
+  group_by(northing_km, easting_km) %>%
+  summarize(s = sum(value)) %>%
+  ggplot(aes(easting_km, northing_km)) +
+  geom_raster(aes(fill = s)) +
+  geom_contour(aes(z = s), bins = 20, color = "white") +
+  geom_point(data = farms, aes(farms$easting_km, farms$northing_km), color = "red")
+
+```
+
 
 # get values for farms
