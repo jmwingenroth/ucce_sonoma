@@ -22,8 +22,11 @@ library(tidyverse)
 ```{r load data}
 
 aq_sensors <- read_csv(file = "aq_sensors.csv")
-farms <- read_csv(file = "###x")
+farms <- read_csv(file = "farm_data.csv")
+hysplit <- readxl::read_xlsx(path = "HYSPLIT_data.xlsx")
 
+all(sort(hysplit$Address)==sort(farms$address))
+    
 ```
 
 # model function
