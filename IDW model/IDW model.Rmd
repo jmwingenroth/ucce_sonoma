@@ -2,7 +2,9 @@
 title: "IDW model for short-term and long-term sensors"
 author: "Jordan Wingenroth"
 date: "May 31, 2018"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r knitr opts, include=FALSE}
@@ -467,7 +469,7 @@ farms <- farms %>%
          local_norm = localpm25/max(localpm25), 
          pos_norm = falsenegspm25/max(falsenegspm25), 
          both_norm = localpm25above0/max(localpm25above0)) %>%
-  select(Key, address, 
+  select(Key, address, lat, long, 
          HYSPLIT_raw = `Exposure (raw, final model, normalized)`, 
          HYSPLIT_smooth = `Exposure (smoothed, final model, normalized)`,
          all_sensors = aq_norm,
@@ -483,12 +485,12 @@ kable(farms, digits = 5)
 ## Correlations between HYSPLIT and AQ sensor data
 
 ```{r pairs, fig.width=8, fig.height=8}
-pairs(farms[,3:8])
+pairs(farms[,3:10])
 ```
 
 HYSPLIT and the air quality sensors just seem to be irreconciliably at odds.
 
-# Perhaps this has all been too complicated. A simplistic approach to close with.
+# Perhaps this has all been too complicated. A couple simplistic approaches to close with.
 
 ```{r data exploration}
 
@@ -502,3 +504,15 @@ pm25 %>%
 ```
 
 Rincon Valley Middle School and the Sebastopol station recorded the most consistently high air quality measurements. If we have samples to spare, or if we just want to toss out the model, which might have been overkill to begin with, maybe choosing the closest farm to each of these locations would be a good idea.
+
+## Top sites
+
+HYsplit: 301 Steele Ln, Santa Rosa, CA, 95403
+AQ_all sensors: 1001 McNear Ave, Petaluma, CA, 94952
+AQ_local sensors: 8511 Liman Way, Rohnert Park, CA, 94928
+
+
+
+
+
+
