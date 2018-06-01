@@ -15,6 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
 library(readxl)
+library(lubridate)
 
 ```
 
@@ -75,6 +76,16 @@ We're lacking sensors to the northwest of the sites, but we have a good number t
 
 ARB 14 & 38 Riebli sites have incorrect GPS data???
 
+#fix Riebli data
+
+```{r fix}
+
+aq_sensors[grep("Riebli", aq_sensors$name),]$lat <- 38.500
+aq_sensors[grep("Riebli", aq_sensors$name),]$long <- -122.741
+
+```
+
+
 # PM 2.5 data setup
 
 ```{r load short term pm 2.5 data}
@@ -86,8 +97,48 @@ for (i in 1:length(short_term_pm25)) short_term_pm25[[i]] <- mutate(short_term_p
 short_term_pm25 <- do.call(rbind, short_term_pm25)
 short_term_pm25 <- select(short_term_pm25, name, everything())
 
+sort(unique(short_term_pm25$name))==sort(aq_sensors[aq_sensors$`sensor class`=="short_term",]$name)
+
 ```
 
+Some of the short term sensors have different, but easily matchable names.
+
+```{r tidy pm 2.5 data}
+
+#short-term times
+
+short_term_pm25 <- short_term_pm25 %>%
+  mutate(datetime = `Date/Time/` + 3600*hour(PST))
+
+
+#long-term times
+
+long_term_pm25 <- long_term_pm25 %>%
+  mutate(date = as.POSIXct(long_term_pm25$date, format = "%m/%d/%Y"), datetime = date + 3600*start_hour)
+
+#match sites to aq sensors by key
+
+aq_sensors$key <- str_sub(aq_sensors$name, end = 10)
+long_term_pm25$key <- str_sub(long_term_pm25$name, end = 10)
+short_term_pm25$key <- str_sub(short_term_pm25$name, end = 10)
+
+length(sort(unique(aq_sensors$key))==sort(c(unique(long_term_pm25$key), unique(short_term_pm25$key))))
+
+#pull out and match up essential columns for purpose of rowbinding and joining
+
+t1<-short_term_pm25 %>%
+  select(key, name, datetime, value = ConcHr)
+
+t2<-long_term_pm25 %>%
+  select(key, name, datetime, value)
+
+#rowbind and join to gps data
+
+pm25 <- rbind(t1, t2)
+
+pm25 <- left_join(pm25, aq_sensors, "key")
+
+```
 
 # graphs of sensor data
 
