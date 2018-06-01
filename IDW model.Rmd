@@ -1,0 +1,33 @@
+---
+title: "IDW model for short-term and long-term sensors"
+author: "Jordan Wingenroth"
+date: "May 31, 2018"
+output: html_document
+---
+
+```{r knitr opts, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r libraries}
+
+library(tidyverse)
+
+```
+
+# data setup
+
+```{r load data}
+
+aq_sensors <- read_csv(file = "aq_sensors.csv")
+farms <- read_csv(file = "###x")
+
+```
+
+# model function
+
+# run model
+
+# plots
