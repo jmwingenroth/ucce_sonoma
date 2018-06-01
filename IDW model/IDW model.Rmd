@@ -19,9 +19,18 @@ library(tidyverse)
 
 # geographic data setup
 
-```{r load geographic data}
+```{r load data}
 
-aq_sensors <- read_csv(file = "../data/aq_sensors.csv")
+st_sensors <- read_csv(file = "../data/aq_sensors.csv")
+st_sensors <- filter(st_sensors, `sensor class` == "short_term")
+
+#the pm 2.5 dataset was a large file (10 MB), so I filtered it to only include sites within ~1 deg of the centerpoint of sampling sites in Excel prior to adding to project
+
+long_term_pm25 <- read_csv("../data/long_term_pm25.csv")
+lt_sensors <-long_term_pm25 %>%
+  distinct(name, .keep_all = TRUE) %>%
+  transmute(name, "sensor class" = "long_term", latitude, longitude)
+
 farms <- read_csv(file = "../data/farm_data.csv")
 hysplit <- readxl::read_xlsx(path = "../data/HYSPLIT_data.xlsx")
 
@@ -42,7 +51,9 @@ rm(list = "hysplit")
 
 #aq_sensors
 
-colnames(aq_sensors)[3:4] <- c("lat", "long")
+aq_sensors <- rbind(lt_sensors, st_sensors)
+rm(list = c("lt_sensors", "st_sensors"))
+aq_sensors <- rename(aq_sensors, lat = latitude, long = longitude)
 
 ```
 
@@ -55,13 +66,20 @@ ggplot(NULL, aes(long, lat)) +
   geom_text(data = aq_sensors, color = "black", alpha = .3, aes(label = name), hjust = "inward", vjust = "inward", size = 3) +
   geom_point(data = farms, color = "red") +
   geom_text(data = farms, color = "red", alpha = .3, aes(label = Key), hjust = "inward", vjust = "inward", size = 3) +
-  coord_fixed(xlim = c(-123, -122.5), ylim = c(38.15, 38.65))
+  coord_fixed()
 
 ```
 
 We're lacking sensors to the northwest of the sites, but we have a good number to the southeast (Vacaville, Vallejo, Berkeley, SF, Oakland).
 
 # PM 2.5 data setup
+
+```{r load pm 2.5 data}
+
+
+
+```
+
 
 # graphs of sensor data
 
