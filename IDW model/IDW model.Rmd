@@ -21,12 +21,12 @@ library(tidyverse)
 
 ```{r load geographic data}
 
-aq_sensors <- read_csv(file = "data/aq_sensors.csv")
-farms <- read_csv(file = "data/farm_data.csv")
-hysplit <- readxl::read_xlsx(path = "data/HYSPLIT_data.xlsx")
+aq_sensors <- read_csv(file = "../data/aq_sensors.csv")
+farms <- read_csv(file = "../data/farm_data.csv")
+hysplit <- readxl::read_xlsx(path = "../data/HYSPLIT_data.xlsx")
 
 all(sort(hysplit$Address)==sort(farms$address))
-    
+
 ```
 
 ```{r tidy geographic data}
@@ -69,4 +69,4 @@ We're lacking sensors to the northwest of the sites, but we have a good number t
 
 # run model
 
-# plots
+# model plots
