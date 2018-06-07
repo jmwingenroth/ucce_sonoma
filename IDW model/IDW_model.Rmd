@@ -24,6 +24,7 @@ library(animation)
 library(gganimate)
 library(sp)
 library(knitr)
+library(raster)
 
 ```
 
@@ -177,7 +178,7 @@ pm25 <- pm25 %>%
 
 Data from http://www.csgnetwork.com/degreelenllavcalc.html
 
-```{r}
+```{r northing easting}
 
 farms<- farms %>%
   mutate(northing_km = 111.005*(lat-38.5), easting_km = 87.233*(long+122.75))
@@ -435,7 +436,8 @@ krige <- do.call(rbind, krige)
 
 cumul <- krige %>%
   group_by(raster_x, raster_y) %>%
-  summarize(s = sum(value, na.rm = TRUE))
+  summarize(s = sum(value, na.rm = TRUE)) %>%
+  ungroup()
 
 ```
 
@@ -459,6 +461,24 @@ farms <- farms %>%
   left_join(rename(cumul, "localpm25above0" = s), c("raster_x", "raster_y"))
 
 ```
+
+```{r both save raster}
+
+#back to lat/long for qgis
+cumul <- cumul %>%
+  mutate(raster_y = raster_y/111.005 + 38.5, raster_x = raster_x/87.233 - 122.75)
+
+coordinates(cumul) <- ~raster_x + raster_y
+
+gridded(cumul) <- TRUE
+
+plot(cumul)
+points(farms$easting_km, farms$northing_km)
+
+writeRaster(raster(cumul), "local_aq_sensors", format = "GTiff")
+
+```
+
 
 # Analyzing farm data
 
