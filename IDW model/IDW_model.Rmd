@@ -30,7 +30,11 @@ library(raster)
 
 # geographic data setup
 
-It seemed to make the most sense to load the pm 2.5 data from longterm sensors at the same time since the lat/long was included in the same table. The pm 2.5 dataset was a large file (10 MB) since it included all October data for the entire state, so I filtered it to only include sites within ~1 deg of the centerpoint of sampling sites in Excel prior to adding to the project.
+It seemed to make the most sense to load the pm 2.5 data from longterm sensors 
+at the same time since the lat/long was included in the same table. The pm 2.5 
+dataset was a large file (10 MB) since it included all October data for the 
+entire state, so I filtered it to only include sites within ~1 deg of the 
+centerpoint of sampling sites in Excel prior to adding to the project.
 
 ```{r load farm and sensor geographic data}
 
@@ -56,7 +60,10 @@ all(sort(hysplit$Address)==sort(farms$address))
 farms <- left_join(farms, hysplit, by = c("address" = "Address"))
 
 farms <- farms %>%
-  dplyr::select(address, Key, long, lat, `Exposure (raw, final model, normalized)`, `Exposure (smoothed, final model, normalized)`, `Rank (raw)`, `Rank (smoothed)`)
+  dplyr::select(address, Key, long, lat, 
+                `Exposure (raw, final model, normalized)`, 
+                `Exposure (smoothed, final model, normalized)`, 
+                `Rank (raw)`, `Rank (smoothed)`)
 
 rm(list = "hysplit")
 
@@ -74,15 +81,18 @@ aq_sensors <- rename(aq_sensors, lat = latitude, long = longitude)
 
 ggplot(NULL, aes(long, lat)) +
   geom_point(data = aq_sensors) +
-  geom_text(data = aq_sensors, color = "black", alpha = .3, aes(label = name), hjust = "inward", vjust = "inward", size = 3) +
+  geom_text(data = aq_sensors, color = "black", alpha = .3, aes(label = name), 
+            hjust = "inward", vjust = "inward", size = 3) +
   geom_point(data = farms, color = "red") +
-  geom_text(data = farms, color = "red", alpha = .3, aes(label = Key), hjust = "inward", vjust = "inward", size = 3) +
+  geom_text(data = farms, color = "red", alpha = .3, aes(label = Key), 
+            hjust = "inward", vjust = "inward", size = 3) +
   borders("state", "California") +
   coord_fixed(xlim = c(-123.5,-121.5), ylim = c(37.5, 39.5))
 
 ```
 
-We're lacking sensors to the northwest of the sites, but we have a good number to the southeast (Vacaville, Vallejo, Berkeley, SF, Oakland).
+We're lacking sensors to the northwest of the sites, but we have a good number
+to the southeast (Vacaville, Vallejo, Berkeley, SF, Oakland).
 
 ARB 14 & 38 Riebli sites have incorrect GPS data???
 
@@ -100,9 +110,11 @@ aq_sensors[grep("Riebli", aq_sensors$name),]$long <- -122.741
 
 ggplot(NULL, aes(long, lat)) +
   geom_point(data = aq_sensors) +
-  geom_text(data = aq_sensors, color = "black", alpha = .3, aes(label = name), hjust = "inward", vjust = "inward", size = 3) +
+  geom_text(data = aq_sensors, color = "black", alpha = .3, aes(label = name), 
+            hjust = "inward", vjust = "inward", size = 3) +
   geom_point(data = farms, color = "red") +
-  geom_text(data = farms, color = "red", alpha = .3, aes(label = Key), hjust = "inward", vjust = "inward", size = 3) +
+  geom_text(data = farms, color = "red", alpha = .3, aes(label = Key), 
+            hjust = "inward", vjust = "inward", size = 3) +
   borders("state", "California") +
   coord_fixed(xlim = c(-123.5,-121.5), ylim = c(37.5, 39.5))
 
@@ -116,7 +128,13 @@ ggplot(NULL, aes(long, lat)) +
 st_files <- list.files("../data/short_term_pm25", full.names = TRUE)
 short_term_pm25 <- lapply(st_files, function(x) read_xlsx(x))
 names(short_term_pm25) <- str_sub(st_files, 42, -20)
-for (i in 1:length(short_term_pm25)) short_term_pm25[[i]] <- mutate(short_term_pm25[[i]], name = names(short_term_pm25[i]))
+for (i in 1:length(short_term_pm25)) {
+  
+  short_term_pm25[[i]] <- mutate(short_term_pm25[[i]], 
+                                 name = names(short_term_pm25[i]))
+  
+}
+
 short_term_pm25 <- do.call(rbind, short_term_pm25)
 short_term_pm25 <- dplyr::select(short_term_pm25, name, everything())
 
@@ -185,6 +203,9 @@ farms<- farms %>%
 
 pm25 <- pm25 %>%
   mutate(northing_km = 111.005*(lat-38.5), easting_km = 87.233*(long+122.75))
+
+pm25 <- pm25 %>%
+  filter(key!="ARB 33 San", !str_detect(key, " Rin"), !str_detect(key, "Sebast"))
 
 ggplot(NULL, aes(easting_km, northing_km)) +
   geom_point(data = distinct(pm25,long,lat,.keep_all=TRUE)) +
@@ -276,7 +297,7 @@ pm25 %>%
 
 myIDW <- function(data = pm25, start_time = "2017-10-08", end_time = "2017-10-20",
                 xmin = -110, xmax = 110, xinc = 1, ymin = -110, ymax = 110, yinc = 1,
-                idp = 2, nmax = Inf, mdist = NULL) {
+                idp = 2, nmax = Inf, mdist = Inf) {
   
   stack <- list()
   
@@ -298,11 +319,9 @@ myIDW <- function(data = pm25, start_time = "2017-10-08", end_time = "2017-10-20
     
     j <- j+1
     
-    stack[[j]] <- as_tibble(idw(value~1, locations = timepoint, newdata = grid, idp = idp, nmax = nmax, maxdist = mdist))
+    stack[[j]] <- as_tibble(idw(value~1, locations = timepoint, newdata = grid, idp = idp, nmax = nmax, maxdist = mdist, debug.level = 0))
     stack[[j]][4] <- as.POSIXct(start_time) + 3600*(j-1)
     colnames(stack[[j]]) <- c("raster_x", "raster_y", "value", "datetime")
-    
-    print(j)
     
   }
   
@@ -315,9 +334,9 @@ myIDW <- function(data = pm25, start_time = "2017-10-08", end_time = "2017-10-20
 
 # With all sensors
 
-```{r all sensors model run, results="hide"}
+```{r all sensors model run}
 
-krige <- myIDW(xmin = -30, xmax = 30, xinc = 1, ymin = -40, ymax = 20, yinc = 1, mdist = 55, idp = 1.5)
+invisible(krige <- myIDW(xmin = -17, xmax = 12, xinc = 1, ymin = -32, ymax = 10, yinc = 1, idp = 2, nmax = Inf))
 
 krige <- do.call(rbind, krige)
 
@@ -327,16 +346,18 @@ cumul <- krige %>%
 
 ```
 
-```{r all sensors plot, fig.width=8, fig.height=8}
+```{r all sensors plot, fig.height= 5, fig.width=4}
 
 cumul %>%
-  ggplot(aes(raster_x, raster_y)) +
-  geom_raster(aes(fill = s)) +
-  geom_contour(aes(z = s), bins = 20, color = "white") +
-  geom_point(data = farms, aes(farms$easting_km, farms$northing_km), color = "red") +
-  geom_point(data = distinct(pm25,lat,long,.keep_all=TRUE), aes(easting_km, northing_km), color = "green") +
-  geom_text(data = distinct(pm25,lat,long,.keep_all=TRUE), aes(easting_km, northing_km, label = key), color = "white") +
-  coord_fixed(xlim=c(-40,40),ylim=c(-50,30))
+  mutate(lat = raster_y/111.005+38.5, long = raster_x/87.233-122.75) %>%
+  ggplot(aes(y = lat, x = long)) +
+  scale_fill_viridis_c() +
+  geom_raster(aes(fill = s/max(s))) +
+  geom_point(data = farms, aes(farms$long, farms$lat), color = "white") +
+  geom_point(data = distinct(pm25,lat,long,.keep_all=TRUE), aes(long, lat), color = "red") +
+  coord_fixed(xlim=c(-122.95, -122.6),ylim=c(38.2, 38.6)) +
+  labs(x = "long", y = "lat") +
+  guides(fill = guide_colorbar(title = "rel. exp."))
 
 ```
 
@@ -348,191 +369,21 @@ farms <- farms %>%
 
 ```
 
-# Controlling for Napa interference:
-## Including only local sensors
-
-```{r local sensors model run, results="hide"}
-
-krige <- myIDW(data = filter(pm25, abs(easting_km)<30, northing_km>-40, northing_km<20),
-               xmin = -30, xmax = 30, xinc = 1, ymin = -40, ymax = 20, yinc = 1, mdist = 55, idp = 1.5)
-
-krige <- do.call(rbind, krige)
-
-cumul <- krige %>%
-  group_by(raster_x, raster_y) %>%
-  summarize(s = sum(value))
-
-```
-
-```{r local sensors plot, fig.width=8, fig.height=8}
-
-cumul %>%
-  ggplot(aes(raster_x, raster_y)) +
-  geom_raster(aes(fill = s)) +
-  geom_contour(aes(z = s), bins = 20, color = "white") +
-  geom_point(data = farms, aes(farms$easting_km, farms$northing_km), color = "red") +
-  geom_point(data = distinct(pm25,lat,long,.keep_all=TRUE), aes(easting_km, northing_km), color = "green") +
-  geom_text(data = distinct(pm25,lat,long,.keep_all=TRUE), aes(easting_km, northing_km, label = key), color = "white") +
-  coord_fixed(xlim=c(-40,40),ylim=c(-50,30))
-
-```
-
-```{r local sensors farm data}
-
-farms <- farms %>%
-  mutate(raster_x = round(easting_km), raster_y = round(northing_km)) %>%
-  left_join(rename(cumul, "localpm25" = s), c("raster_x", "raster_y"))
-
-```
-
-# Controlling for false negatives:
-## Including only measurements above 5 ug/m3 (well below pre-fire background level)
-
-This can sort of be thought of as a worst-case scenario. It might also cut down on the bias from the Napa sensor.
-
-```{r false negs model run, results="hide"}
-
-krige <- myIDW(data = filter(pm25, value>5),
-               xmin = -30, xmax = 30, xinc = 1, ymin = -40, ymax = 20, yinc = 1, mdist = 55, idp = 1.5)
-
-krige <- do.call(rbind, krige)
-
-cumul <- krige %>%
-  group_by(raster_x, raster_y) %>%
-  summarize(s = sum(value, na.rm = TRUE))
-
-```
-
-```{r false negs plot, fig.width=8, fig.height=8}
-
-cumul %>%
-  ggplot(aes(raster_x, raster_y)) +
-  geom_raster(aes(fill = s)) +
-  geom_contour(aes(z = s), bins = 20, color = "white") +
-  geom_point(data = farms, aes(farms$easting_km, farms$northing_km), color = "red") +
-  geom_point(data = distinct(pm25,lat,long,.keep_all=TRUE), aes(easting_km, northing_km), color = "green") +
-  geom_text(data = distinct(pm25,lat,long,.keep_all=TRUE), aes(easting_km, northing_km, label = key), color = "white") +
-  coord_fixed(xlim=c(-40,40),ylim=c(-50,30))
-
-```
-
-```{r false negs farm data}
-
-farms <- farms %>%
-  mutate(raster_x = round(easting_km), raster_y = round(northing_km)) %>%
-  left_join(rename(cumul, "falsenegspm25" = s), c("raster_x", "raster_y"))
-
-```
-
-# Finally, applying the false negative removal to the local data
-
-```{r both model run, results="hide"}
-
-#had to use 0 for value to avoid model crashing (not totally sure why)
-krige <- myIDW(data = filter(pm25, value>0, abs(easting_km)<30, northing_km>-40, northing_km<20),
-               xmin = -30, xmax = 30, xinc = 1, ymin = -40, ymax = 20, yinc = 1, mdist = 55, idp = 1.5)
-
-krige <- do.call(rbind, krige)
-
-cumul <- krige %>%
-  group_by(raster_x, raster_y) %>%
-  summarize(s = sum(value, na.rm = TRUE)) %>%
-  ungroup()
-
-```
-
-```{r both plot, fig.width=8, fig.height=8}
-
-cumul %>%
-  ggplot(aes(raster_x, raster_y)) +
-  geom_raster(aes(fill = s)) +
-  geom_contour(aes(z = s), bins = 20, color = "white") +
-  geom_point(data = farms, aes(farms$easting_km, farms$northing_km), color = "red") +
-  geom_point(data = distinct(pm25,lat,long,.keep_all=TRUE), aes(easting_km, northing_km), color = "green") +
-  geom_text(data = distinct(pm25,lat,long,.keep_all=TRUE), aes(easting_km, northing_km, label = key), color = "white") +
-  coord_fixed(xlim=c(-40,40),ylim=c(-50,30))
-
-```
-
-```{r both farm data}
-
-farms <- farms %>%
-  mutate(raster_x = round(easting_km), raster_y = round(northing_km)) %>%
-  left_join(rename(cumul, "localpm25above0" = s), c("raster_x", "raster_y"))
-
-```
-
-```{r both save raster}
-
-#back to lat/long for qgis
-cumul <- cumul %>%
-  mutate(raster_y = raster_y/111.005 + 38.5, raster_x = raster_x/87.233 - 122.75)
-
-coordinates(cumul) <- ~raster_x + raster_y
-
-gridded(cumul) <- TRUE
-
-plot(cumul)
-points(farms$easting_km, farms$northing_km)
-
-writeRaster(raster(cumul), "local_aq_sensors", format = "GTiff")
-
-```
-
-
 # Analyzing farm data
 
 ```{r tidy and print farm data}
 
-farms <- farms %>%
-  mutate(aq_norm = allpm25/max(allpm25), 
-         local_norm = localpm25/max(localpm25), 
-         pos_norm = falsenegspm25/max(falsenegspm25), 
-         both_norm = localpm25above0/max(localpm25above0)) %>%
-  select(Key, address, lat, long, 
+farms %>%
+  mutate(aq_norm = allpm25/max(allpm25)) %>%
+  dplyr::select(Key, address, lat, long, 
          HYSPLIT_raw = `Exposure (raw, final model, normalized)`, 
-         HYSPLIT_smooth = `Exposure (smoothed, final model, normalized)`,
-         all_sensors = aq_norm,
-         local_sensors = local_norm,
-         wo_false_negs = pos_norm,
-         local_wo_false_negs = both_norm)
-
-kable(farms, digits = 5)
+         all_sensors = aq_norm) %>%
+  mutate(HYSPLIT_raw = (HYSPLIT_raw-min(HYSPLIT_raw))/(max(HYSPLIT_raw)-min(HYSPLIT_raw)),
+         all_sensors = (all_sensors-min(all_sensors))/(max(all_sensors)-min(all_sensors))) %>%
+  ggplot(aes(x = HYSPLIT_raw, y = all_sensors, label = Key)) +
+  geom_text(size = 4)
 
 ```
-
-
-## Correlations between HYSPLIT and AQ sensor data
-
-```{r pairs, fig.width=8, fig.height=8}
-pairs(farms[,3:10])
-```
-
-HYSPLIT and the air quality sensors just seem to be irreconciliably at odds.
-
-# Perhaps this has all been too complicated. A couple simplistic approaches to close with.
-
-```{r data exploration}
-
-pm25 %>%
-  filter(datetime>as.Date("2017-10-8"), datetime<as.Date("2017-10-20"), abs(easting_km)<30, northing_km>-40, northing_km<20) %>%
-  group_by(name) %>%
-  ggplot(aes(x = name, y = datetime)) +
-  geom_raster(aes(fill = value)) +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
-
-```
-
-Rincon Valley Middle School and the Sebastopol station recorded the most consistently high air quality measurements. If we have samples to spare, or if we just want to toss out the model, which might have been overkill to begin with, maybe choosing the closest farm to each of these locations would be a good idea.
-
-## Top sites
-
-HYsplit: 301 Steele Ln, Santa Rosa, CA, 95403  
-AQ_all sensors: 1001 McNear Ave, Petaluma, CA, 94952  
-AQ_local sensors: 8511 Liman Way, Rohnert Park, CA, 94928  
-
-
-
 
 
 
