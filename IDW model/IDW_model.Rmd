@@ -353,11 +353,14 @@ cumul %>%
   ggplot(aes(y = lat, x = long)) +
   scale_fill_viridis_c() +
   geom_raster(aes(fill = s/max(s))) +
+  geom_contour(color = "gray", aes(z = s)) +
   geom_point(data = farms, aes(farms$long, farms$lat), color = "white") +
   geom_point(data = distinct(pm25,lat,long,.keep_all=TRUE), aes(long, lat), color = "red") +
   coord_fixed(xlim=c(-122.95, -122.6),ylim=c(38.2, 38.6)) +
   labs(x = "long", y = "lat") +
   guides(fill = guide_colorbar(title = "rel. exp."))
+
+ggsave("plot.png")
 
 ```
 
