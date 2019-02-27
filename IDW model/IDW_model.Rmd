@@ -342,7 +342,7 @@ krige <- do.call(rbind, krige)
 
 cumul <- krige %>%
   group_by(raster_x, raster_y) %>%
-  summarize(s = sum(value))
+  summarize(total = sum(value), avg = mean(value), max = max(value))
 
 ```
 
@@ -352,8 +352,8 @@ cumul %>%
   mutate(lat = raster_y/111.005+38.5, long = raster_x/87.233-122.75) %>%
   ggplot(aes(y = lat, x = long)) +
   scale_fill_viridis_c() +
-  geom_raster(aes(fill = s/max(s))) +
-  geom_contour(color = "gray", aes(z = s)) +
+  geom_raster(aes(fill = total/max(total))) +
+  geom_contour(color = "gray", aes(z = total)) +
   geom_point(data = farms, aes(farms$long, farms$lat), color = "white") +
   geom_point(data = distinct(pm25,lat,long,.keep_all=TRUE), aes(long, lat), color = "red") +
   coord_fixed(xlim=c(-122.95, -122.6),ylim=c(38.2, 38.6)) +
@@ -368,7 +368,7 @@ ggsave("plot.png")
 
 farms <- farms %>%
   mutate(raster_x = round(easting_km), raster_y = round(northing_km)) %>%
-  left_join(rename(cumul, "allpm25" = s), c("raster_x", "raster_y"))
+  left_join(cumul, c("raster_x", "raster_y"))
 
 ```
 
@@ -377,15 +377,25 @@ farms <- farms %>%
 ```{r tidy and print farm data}
 
 farms %>%
-  mutate(aq_norm = allpm25/max(allpm25)) %>%
+  mutate(aq_norm = total/max(total)) %>%
   dplyr::select(Key, address, lat, long, 
          HYSPLIT_raw = `Exposure (raw, final model, normalized)`, 
          all_sensors = aq_norm) %>%
   mutate(HYSPLIT_raw = (HYSPLIT_raw-min(HYSPLIT_raw))/(max(HYSPLIT_raw)-min(HYSPLIT_raw)),
          all_sensors = (all_sensors-min(all_sensors))/(max(all_sensors)-min(all_sensors))) %>%
   ggplot(aes(x = HYSPLIT_raw, y = all_sensors, label = Key)) +
-  geom_text(size = 4)
+  geom_text(size = 2)
 
+farmdata3_23 <- farms %>%
+  rename(HYSPLIT = `Exposure (raw, final model, normalized)`) %>%
+  dplyr::select(Key, avg, max) %>%
+  filter(Key %in% c("SRO10", "SRO02", "ROH02", "PTL04", "SRO09", "LKW01"))
+
+write_csv(farmdata3_23, "farmdata3_23.csv")
+
+
+
+  
 ```
 
 
