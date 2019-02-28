@@ -1,0 +1,512 @@
+alldata <- rbind(norcal, centcal, socal) %>%
+arrange(latitude)
+rm(list = c("norcal", "centcal", "socal"))
+alldata$time<-strptime(alldata$date, "%Y-%m-%d")+3600*alldata$start_hour
+timedata <- strptime("10/1/17", "%m/%d/%y")+(0:767)*3600
+timedata <- as_data_frame(timedata)
+indices <- list()
+for (i in 1:nrow(timedata)){
+indices[i]<-list(which(alldata$time==timedata$value[i]))
+}
+timedata[unique(alldata$name)]<-NA
+for (i in unique(alldata$name)){
+temp <- filter(alldata, name==i)
+for (j in 1:nrow(temp)){
+timedata[timedata$value==temp$time[j],i] <- temp$value[j]
+}
+}
+rm(list=c("indices","temp","i","j"))
+timedata %>%
+gather(place, pm25, -value) %>%
+mutate(place = factor(place, levels = unique(place))) %>%
+ggplot(aes(place, value)) +
+geom_raster(aes(fill = pm25,base = 10)) +
+theme(axis.text.x = element_text(angle = 90, hjust = 1))
+timedata %>%
+gather(place, pm25, -value) %>%
+ggplot(aes(x=pm25)) +
+geom_histogram() +
+scale_y_log10()
+timedata %>%
+#replace malfunctions with NA
+replace(timedata<0|timedata>900&timedata<1200, NA) %>%
+#remove less dependable sensors
+.[(names(which(lapply(.[(8*24):(14*24),], function(x) sum(is.na(x))/768)<.1)))] -> timedata
+alldata %>%
+filter(name=="Napa-Jefferson Avenue", time>"2017-10-9", time<"2017-10-17") %>%
+ggplot(aes(value, x_label ="pm 2.5")) +
+geom_histogram(bins = 20, col = "blue", fill = 'blue')
+print("#The fraction of NAs in the raw data")
+sum(is.na(timedata))/prod(dim(timedata))
+mean12hr <- timedata
+mean12hr[-1] <- RcppRoll::roll_mean(as.matrix(timedata[-1]), n = 12, fill = NA, na.rm = T)
+print("#The fraction of NAs in the 12-hr rolling mean data")
+sum(is.na(mean12hr))/prod(dim(mean12hr))
+max12hr <- timedata
+max12hr[-1] <- roll_max(as.matrix(timedata[-1]), n = 12, fill = NA, na.rm = T)
+max12hr %>%
+gather(place, pm25, -value) %>%
+mutate(place = factor(place, levels = unique(place))) %>%
+ggplot(aes(place, value)) +
+geom_raster(aes(fill = pm25,base = 10)) +
+theme(axis.text.x = element_text(angle = 90, hjust = 1))
+max12hr %>%
+gather(place, pm25, -value) %>%
+ggplot(aes(x=pm25)) +
+geom_histogram() +
+scale_y_log10()
+mean12hr %>%
+gather(place, pm25, -value) %>%
+mutate(place = factor(place, levels = unique(place))) %>%
+ggplot(aes(place, value)) +
+geom_raster(aes(fill = pm25,base = 10)) +
+theme(axis.text.x = element_text(angle = 90, hjust = 1))
+mean12hr %>%
+gather(place, pm25, -value) %>%
+ggplot(aes(x=pm25)) +
+geom_histogram() +
+scale_y_log10()
+gather(timedata, place, pm25, -value) %>%
+left_join(gather(mean12hr, place, mean12hr, -value)) %>%
+left_join(gather(max12hr, place, max12hr, -value)) %>%
+left_join(distinct(alldata, name, latitude, longitude), by = c("place"="name")) -> modeldata
+grd <- expand.grid(x = seq(min(modeldata$longitude)-.5, max(modeldata$longitude)+.5, by=.05),
+y = seq(min(modeldata$latitude)-.5, max(modeldata$latitude)+.5, by=.05))
+coordinates(grd) <- ~x +y
+gridded(grd) <- TRUE
+modeldata$hour <-  as.numeric(difftime(modeldata$value,"2017-10-01")/3600)
+idw.output <- list(1:length(unique(modeldata$hour)))
+for (i in 0:max(modeldata$hour)) {#0:max(modeldata$hour)
+modeldata %>%
+select_('hour', 'value', 'pm25', 'place', 'longitude', 'latitude') %>%
+filter(hour == i) %>%
+na.omit() -> testset
+coordinates(testset) <- ~longitude + latitude
+idw <- idw(formula = pm25~1, locations = testset, newdata = grd, nmax = 10)
+idw.output[[i+1]] = as.data.frame(idw)
+}
+require(tidyverse)
+require(sp)
+require(spacetime)
+install.packages(spacetime)
+install.packages("spacetime")
+require(ggplot2)
+require(RcppRoll)
+require(zoo)
+require(maps)
+require(geomapdata)
+install.packages("geomapdata")
+require(tibble)
+require(rgdal)
+require(maptools)
+install.packages("maptools")
+require(maptools)
+require(ggmap)
+install.packages("ggmap")
+require(gstat)
+install.packages("gstat")
+require(raster)
+require(animation)
+install.packages("animation")
+require(RColorBrewer)
+require(reshape2)
+require(r)
+install.packages("r")
+gather(timedata, place, pm25, -value) %>%
+left_join(gather(mean12hr, place, mean12hr, -value)) %>%
+left_join(gather(max12hr, place, max12hr, -value)) %>%
+left_join(distinct(alldata, name, latitude, longitude), by = c("place"="name")) -> modeldata
+grd <- expand.grid(x = seq(min(modeldata$longitude)-.5, max(modeldata$longitude)+.5, by=.05),
+y = seq(min(modeldata$latitude)-.5, max(modeldata$latitude)+.5, by=.05))
+coordinates(grd) <- ~x +y
+gridded(grd) <- TRUE
+modeldata$hour <-  as.numeric(difftime(modeldata$value,"2017-10-01")/3600)
+idw.output <- list(1:length(unique(modeldata$hour)))
+for (i in 0:max(modeldata$hour)) {#0:max(modeldata$hour)
+modeldata %>%
+select_('hour', 'value', 'pm25', 'place', 'longitude', 'latitude') %>%
+filter(hour == i) %>%
+na.omit() -> testset
+coordinates(testset) <- ~longitude + latitude
+idw <- idw(formula = pm25~1, locations = testset, newdata = grd, nmax = 10)
+idw.output[[i+1]] = as.data.frame(idw)
+}
+gather(timedata, place, pm25, -value) %>%
+left_join(gather(mean12hr, place, mean12hr, -value)) %>%
+left_join(gather(max12hr, place, max12hr, -value)) %>%
+left_join(distinct(alldata, name, latitude, longitude), by = c("place"="name")) -> modeldata
+grd <- expand.grid(x = seq(min(modeldata$longitude)-.5, max(modeldata$longitude)+.5, by=.05),
+y = seq(min(modeldata$latitude)-.5, max(modeldata$latitude)+.5, by=.05))
+coordinates(grd) <- ~x +y
+gridded(grd) <- TRUE
+modeldata$hour <-  as.numeric(difftime(modeldata$value,"2017-10-01")/3600)
+idw.output <- list(1:length(unique(modeldata$hour)))
+for (i in 0:max(modeldata$hour)) {#0:max(modeldata$hour)
+modeldata %>%
+select_('hour', 'value', 'pm25', 'place', 'longitude', 'latitude') %>%
+filter(hour == i) %>%
+na.omit() -> testset
+coordinates(testset) <- ~longitude + latitude
+idw <- gstat::idw(formula = pm25~1, locations = testset, newdata = grd, nmax = 10)
+idw.output[[i+1]] = as.data.frame(idw)
+}
+clonenorth <- idw.output
+for (i in 1:length(clonenorth)) {
+coordinates(clonenorth[[i]]) <- ~x+y
+gridded(clonenorth[[i]]) <- TRUE
+clonenorth[[i]] <- raster(clonenorth[[i]])
+}
+stack <- stack(clonenorth)
+counties<-readRDS("data/counties.rds")
+CA <- mask(stack, counties)
+names(CA) <- strptime("10/01/17", "%m/%d/%y")+0:767*3600
+pm25datasum <- stackApply(CA, rep(1,nlayers(CA)), fun = sum)/24
+plot(pm25datasum, legend.args=list(text = "micrograms*days/m^3"))
+lines(counties, col = "black")
+points(testset, col = "white")
+pm25datamax <- stackApply(CA, rep(1,nlayers(CA)), fun = max)
+plot(pm25datamax, legend.args=list(text = "max. micrograms/m^3"))
+lines(counties, col = "black")
+points(testset, col = "white")
+gather(timedata, place, pm25, -value) %>%
+left_join(gather(mean12hr, place, mean12hr, -value)) %>%
+left_join(gather(max12hr, place, max12hr, -value)) %>%
+left_join(distinct(alldata, name, latitude, longitude), by = c("place"="name")) -> modeldata
+grd <- expand.grid(x = seq(-124, -120, by=.02),
+y = seq(36, 40, by=.02))
+coordinates(grd) <- ~x +y
+gridded(grd) <- TRUE
+modeldata$hour <-  as.numeric(difftime(modeldata$value,"2017-10-01")/3600)
+idw.output <- list(1:length(unique(modeldata$hour)))
+for (i in 0:max(modeldata$hour)) {#0:max(modeldata$hour)
+modeldata %>%
+select_('hour', 'value', 'pm25', 'place', 'longitude', 'latitude') %>%
+filter(hour == i) %>%
+na.omit() -> testset
+coordinates(testset) <- ~longitude + latitude
+idw <- idw(formula = pm25~1, locations = testset, newdata = grd, nmax = 4, idp =1)
+idw.output[[i+1]] = as.data.frame(idw)
+print(i)
+}
+require(gstat)
+gather(timedata, place, pm25, -value) %>%
+left_join(gather(mean12hr, place, mean12hr, -value)) %>%
+left_join(gather(max12hr, place, max12hr, -value)) %>%
+left_join(distinct(alldata, name, latitude, longitude), by = c("place"="name")) -> modeldata
+grd <- expand.grid(x = seq(-124, -120, by=.02),
+y = seq(36, 40, by=.02))
+coordinates(grd) <- ~x +y
+gridded(grd) <- TRUE
+modeldata$hour <-  as.numeric(difftime(modeldata$value,"2017-10-01")/3600)
+idw.output <- list(1:length(unique(modeldata$hour)))
+for (i in 0:max(modeldata$hour)) {#0:max(modeldata$hour)
+modeldata %>%
+select_('hour', 'value', 'pm25', 'place', 'longitude', 'latitude') %>%
+filter(hour == i) %>%
+na.omit() -> testset
+coordinates(testset) <- ~longitude + latitude
+idw <- idw(formula = pm25~1, locations = testset, newdata = grd, nmax = 4, idp =1)
+idw.output[[i+1]] = as.data.frame(idw)
+print(i)
+}
+clonenorth <- idw.output
+for (i in 1:length(clonenorth)) {
+coordinates(clonenorth[[i]]) <- ~x+y
+gridded(clonenorth[[i]]) <- TRUE
+clonenorth[[i]] <- raster(clonenorth[[i]])
+}
+stack <- stack(clonenorth)
+counties<-readRDS("data/counties.rds")
+CA <- mask(stack, counties)
+names(CA) <- strptime("10/01/17", "%m/%d/%y")+0:767*3600
+pm25datasum <- stackApply(subset(CA,200:400), rep(1,nlayers(CA)), fun = sum)/24
+plot(pm25datasum, legend.args=list(text = "micrograms*days/m^3"))
+lines(counties, col = "black")
+points(testset, col = "white", pch = 19)
+pm25datamax <- stackApply(subset(CA,200:400), rep(1,nlayers(CA)), fun = max)
+plot(pm25datamax, legend.args=list(text = "max. micrograms/m^3"))
+lines(counties, col = "black")
+points(testset, col = "white", pch = 19)
+saveHTML(animate(subset(CA,200:400), n = 1), pause = .1)
+farmdata <- read_csv("farmdata.csv", col_names = FALSE)
+farmdata %>%
+separate(X6, into = c("long", "lat"), sep = ",") %>%
+rename(number = X1, address = X2, Tiger = X3) %>%
+mutate(long = as.numeric(long), lat = as.numeric(lat)) -> farmdata
+coordinates(farmdata) <- ~long+lat
+farmdata <- read_csv("farmdata.csv", col_names = FALSE)
+farmdata %>%
+separate(X6, into = c("long", "lat"), sep = ",") %>%
+rename(number = X1, address = X2, Tiger = X3) %>%
+mutate(long = as.numeric(long), lat = as.numeric(lat)) -> farmdata
+coordinates(farmdata) <- ~long+lat
+grd <- expand.grid(x = seq(-123, -122.5, by=.01),
+y = seq(38.1,38.7, by=.01))
+coordinates(grd) <- ~x +y
+gridded(grd) <- TRUE
+modeldata %>%
+filter(latitude>35.4, latitude<41.4, longitude>-125, longitude<(-120.6), value>"2017-10-06", value<"2017-10-20", place!="Sebastopol-103 Morris Street") -> localpm25
+unique(localpm25$place)
+localpm25$hour <-  as.numeric(difftime(localpm25$value,"2017-10-01",units = "hour"))
+idw.output <- list(1)
+for (i in min(localpm25$hour):max(localpm25$hour)) {#0:max(modeldata$hour)
+localpm25 %>%
+select_('hour', 'value', 'pm25', 'place', 'longitude', 'latitude') %>%
+filter(hour == i) %>%
+na.omit() -> testset
+coordinates(testset) <- ~longitude + latitude
+idw <- idw(formula = pm25~1, locations = testset, newdata = grd, idp=1)
+idw.output[[i+1-min(localpm25$hour)]] = as.data.frame(idw)
+print(i)
+}
+clonenorth <- idw.output
+for (i in 1:length(clonenorth)) {
+coordinates(clonenorth[[i]]) <- ~x+y
+gridded(clonenorth[[i]]) <- TRUE
+clonenorth[[i]] <- raster(clonenorth[[i]])
+}
+stack <- stack(clonenorth)
+pm25datasum <- stackApply(stack, rep(1,nlayers(stack)), fun = sum)/24
+contour(pm25datasum)
+points(farmdata, col = "red")
+points(localpm25$longitude,localpm25$latitude, col = "blue")
+farmdata <- read_csv("farmdata.csv", col_names = FALSE)
+farmdata %>%
+separate(X6, into = c("long", "lat"), sep = ",") %>%
+rename(number = X1, address = X2, Tiger = X3) %>%
+mutate(long = as.numeric(long), lat = as.numeric(lat)) -> farmdata
+coordinates(farmdata) <- ~long+lat
+View(farmdata)
+plot(farmdata)
+farmdata <- read_csv("farmdata.csv", col_names = FALSE)
+farmdata %>%
+separate(X6, into = c("long", "lat"), sep = ",") %>%
+rename(number = X1, address = X2, Tiger = X3) %>%
+mutate(long = as.numeric(long), lat = as.numeric(lat)) -> farmdata
+farmdata %>%
+ggplot(aes(x = long, y = lat)) +
+geom_point()
+farmdata <- read_csv("farmdata.csv", col_names = FALSE)
+farmdata <- farmdata %>%
+separate(X6, into = c("long", "lat"), sep = ",") %>%
+rename(number = X1, address = X2, Tiger = X3) %>%
+mutate(long = as.numeric(long), lat = as.numeric(lat)) -> farmdata
+farmdata %>%
+ggplot(aes(x = long, y = lat)) +
+geom_point()
+View(farmdata)
+colnames(farmdata) <- farmdata[1,]
+farmdata
+farmdata <- read_csv("farmdata.csv", col_names = FALSE)
+farmdata <- farmdata %>%
+separate(X6, into = c("long", "lat"), sep = ",") %>%
+rename(number = X1, address = X2, Tiger = X3) %>%
+mutate(long = as.numeric(long), lat = as.numeric(lat))
+colnames(farmdata) <- farmdata[1,]
+farmdata <- farmdata[-1,]
+farmdata %>%
+ggplot(aes(x = long, y = lat)) +
+geom_point()
+farmdata <- read_csv("farmdata.csv", col_names = FALSE)
+farmdata <- farmdata %>%
+separate(X6, into = c("long", "lat"), sep = ",") %>%
+rename(number = X1, address = X2, Tiger = X3) %>%
+mutate(long = as.numeric(long), lat = as.numeric(lat))
+colnames(farmdata) <- farmdata[1,]
+farmdata <- farmdata[-1,]
+farmdata %>%
+ggplot(aes(x = long, y = lat, label = "NA")) +
+geom_point()
+farmdata <- read_csv("farmdata.csv", col_names = FALSE)
+farmdata <- farmdata %>%
+separate(X6, into = c("long", "lat"), sep = ",") %>%
+rename(number = X1, address = X2, Tiger = X3) %>%
+mutate(long = as.numeric(long), lat = as.numeric(lat))
+colnames(farmdata) <- farmdata[1,]
+farmdata <- farmdata[-1,]
+farmdata %>%
+ggplot(aes(x = long, y = lat, label = 1)) +
+geom_point()
+farmdata <- read_csv("farmdata.csv", col_names = FALSE)
+farmdata <- farmdata %>%
+separate(X6, into = c("long", "lat"), sep = ",") %>%
+rename(number = X1, address = X2, Tiger = X3) %>%
+mutate(long = as.numeric(long), lat = as.numeric(lat))
+colnames(farmdata) <- farmdata[1,]
+farmdata <- farmdata[-1,]
+names(farmdata[,1]) <- "id_temp"
+farmdata %>%
+ggplot(aes(x = long, y = lat, label = "id_temp")) +
+geom_point()
+farmdata <- read_csv("farmdata.csv", col_names = FALSE)
+library(tidyverse)
+library(sp)
+farmdata <- read_csv("farmdata.csv", col_names = FALSE)
+farmdata <- farmdata %>%
+separate(X6, into = c("long", "lat"), sep = ",") %>%
+rename(number = X1, address = X2, Tiger = X3) %>%
+mutate(long = as.numeric(long), lat = as.numeric(lat))
+colnames(farmdata) <- farmdata[1,]
+farmdata <- farmdata[-1,]
+names(farmdata[,1]) <- "id_temp"
+farmdata %>%
+ggplot(aes(x = long, y = lat, label = "id_temp")) +
+geom_point()
+names(farmdata[,1]) <- "id_temp"
+colnames(farmdata[,1]) <- "id_temp"
+farmdata <- read_csv("farmdata.csv", col_names = FALSE)
+farmdata <- farmdata %>%
+separate(X6, into = c("long", "lat"), sep = ",") %>%
+rename(number = X1, address = X2, Tiger = X3) %>%
+mutate(long = as.numeric(long), lat = as.numeric(lat))
+colnames(farmdata) <- farmdata[1,]
+farmdata <- farmdata[-1,]
+colnames(farmdata)[1] <- "id_temp"
+farmdata %>%
+ggplot(aes(x = long, y = lat, label = "id_temp")) +
+geom_point()
+load("C:/Users/Jordan Wingenroth/Google Drive/Grad school/September 2017-/Classes/Sustainability & Society (ESPM 261)/Term project/Modeling/.RData")
+farmdata <- read_csv("farmdata.csv", col_names = FALSE)
+farmdata <- farmdata %>%
+separate(X6, into = c("long", "lat"), sep = ",") %>%
+rename(number = X1, address = X2, Tiger = X3) %>%
+mutate(long = as.numeric(long), lat = as.numeric(lat))
+colnames(farmdata) <- farmdata[1,]
+farmdata <- farmdata[-1,]
+colnames(farmdata)[1] <- "id_temp"
+farmdata %>%
+ggplot(aes(x = long, y = lat, label = "id_temp")) +
+geom_point()
+farmdata <- read_csv("farmdata.csv", col_names = FALSE)
+farmdata <- farmdata %>%
+separate(X6, into = c("long", "lat"), sep = ",") %>%
+rename(number = X1, address = X2, Tiger = X3) %>%
+mutate(long = as.numeric(long), lat = as.numeric(lat))
+colnames(farmdata) <- farmdata[1,]
+farmdata <- farmdata[-1,]
+colnames(farmdata)[1] <- "id_temp"
+farmdata %>%
+ggplot(aes(x = long, y = lat, label = id_temp)) +
+geom_point()
+farmdata <- read_csv("farmdata.csv", col_names = FALSE)
+farmdata <- farmdata %>%
+separate(X6, into = c("long", "lat"), sep = ",") %>%
+rename(number = X1, address = X2, Tiger = X3) %>%
+mutate(long = as.numeric(long), lat = as.numeric(lat))
+colnames(farmdata) <- farmdata[1,]
+farmdata <- farmdata[-1,]
+colnames(farmdata)[1] <- "id_temp"
+farmdata %>%
+ggplot(aes(x = long, y = lat, label = Tiger)) +
+geom_point()
+library(tidyverse)
+library(zoo)
+library(maps)
+data<-as.tibble(read.csv("data/alldata.csv"))
+#Are latitudes and longitudes consistent for data from a single station?
+data %>%
+group_by(name) %>%
+summarise(maxlat=max(latitude), minlat=min(latitude)) %>%
+mutate(equal=maxlat==minlat) %>%
+distinct(equal)
+#Yes
+#Are latitudes and longitudes consistent for data from a single station?
+data %>%
+group_by(name) %>%
+summarise(maxlat=max(latitude), minlat=min(latitude)) %>%
+mutate(equal=maxlat==minlat) %>%
+distinct(equal)
+#Yes
+#Are there any rows empty?
+data %>%
+mutate(missingdata = is.na(value)) %>%
+distinct(missingdata)
+#No
+#What stations are within .6 degree Lat/Long of Napa?
+data %>%
+filter(grepl("Napa",name)) %>%
+distinct(latitude,longitude) -> napaloc
+data %>%
+filter(abs(latitude-napaloc$latitude)<.6,
+abs(longitude-napaloc$longitude)<.6) %>%
+distinct(name) -> nearby
+#Oakland, Berkeley, Concord, San Pablo, San Rafael, Vallejo, Vacaville, Sebastopol (and Napa)
+#Let's cut it to those stations for tidyness
+data %>%
+filter(name %in% nearby$name) -> tidy
+#Let's graph the daily maximum values over October for these stations
+tidy %>%
+group_by(name, date) %>%
+summarise(max = max(value)) %>%
+filter(max<900) %>%
+ungroup() -> dailymax
+dailymax %>%
+filter(grepl("Berkeley|Sebastopol|Napa|San Fran|Vacaville|Concord|San Rafael|Vallejo", name)) %>%
+mutate(date = as.Date(date, format = "%m/%d/%Y")) %>%
+ggplot(aes(date, max, group = name, fill = name)) +
+facet_grid(name~.) +
+geom_col() +
+theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+ylab("micrograms per cubic meter: daily maximum")
+#Now to calculate total max and average for each station
+tidy %>%
+group_by(name) %>%
+filter(value<900, str_sub(date,1,2)=="10") %>%
+mutate(decimalday = as.numeric(str_sub(str_extract(date, "/.*/"),2,-2)) + as.numeric(start_hour)/24) %>%
+ungroup() %>%
+select(date, start_hour, value, units, name, decimalday, latitude, longitude)-> tidy
+tidy %>%
+filter(grepl("Berkeley|Sebastopol|Napa|San Fran|Vacaville|Concord|San Rafael|Vallejo", name), decimalday>7, decimalday<20) %>%
+group_by(name) %>%
+summarize(max = max(value), avg = mean(value), latitude = mean(latitude), longitude = mean(longitude)) -> stats
+write.csv(stats, "pm_2.5_ug_per_m3_10-7_thru_10-20.csv")
+#A map of the sites
+map("state")
+stats %>%
+distinct(latitude,longitude,name) %>%
+ggplot(aes(longitude,latitude, label = name)) +
+geom_point() +
+geom_text(hjust = "inward", vjust = "inward") +
+coord_equal()
+map %>%
+ggplot(long, lat) +
+geom_line()
+#A map of the sites
+map("state")
+stats %>%
+distinct(latitude,longitude,name) %>%
+ggplot(aes(longitude,latitude, label = name)) +
+geom_point() +
+geom_text(hjust = "inward", vjust = "inward") +
+coord_equal()
+map %>%
+ggplot(long, lat) +
+geom_line()
+#A map of the sites
+map("state")
+stats %>%
+distinct(latitude,longitude,name) %>%
+ggplot(aes(longitude,latitude, label = name)) +
+geom_point() +
+geom_text(hjust = "inward", vjust = "inward") +
+coord_equal()
+View(stats)
+#A map of the sites
+map("state")
+stats %>%
+distinct(latitude,longitude,name) %>%
+ggplot(aes(longitude,latitude, label = name)) +
+geom_point() +
+geom_text(hjust = "inward", vjust = "inward") +
+coord_equal()
+map %>%
+ggplot(long, lat) +
+geom_line()
+#A map of the sites
+map("state")
+stats %>%
+distinct(latitude,longitude,name) %>%
+ggplot(aes(longitude,latitude, label = name)) +
+geom_point() +
+geom_text(hjust = "inward", vjust = "inward") +
+coord_equal()

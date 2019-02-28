@@ -386,16 +386,6 @@ farms %>%
   ggplot(aes(x = HYSPLIT_raw, y = all_sensors, label = Key)) +
   geom_text(size = 2)
 
-farmdata3_23 <- farms %>%
-  rename(HYSPLIT = `Exposure (raw, final model, normalized)`) %>%
-  dplyr::select(Key, avg, max) %>%
-  filter(Key %in% c("SRO10", "SRO02", "ROH02", "PTL04", "SRO09", "LKW01"))
-
-write_csv(farmdata3_23, "farmdata3_23.csv")
-
-
-
-  
 ```
 
 

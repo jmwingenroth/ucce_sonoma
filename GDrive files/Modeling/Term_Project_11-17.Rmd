@@ -1,0 +1,393 @@
+---
+title: "Term project: Analyzing agricultural impacts of Santa Rosa fires"
+author: "Jordan Wingenroth"
+date: "November 13, 2017"
+output: html_document
+---
+
+Import station and PM 2.5 data:
+
+```{r}
+
+require(tidyverse)
+require(sp)
+require(spacetime)
+require(ggplot2)
+require(RcppRoll)
+require(zoo)
+require(maps)
+require(geomapdata)
+require(tibble)
+require(rgdal)
+require(maptools)
+require(ggmap)
+require(gstat)
+require(raster)
+require(animation)
+require(RColorBrewer)
+require(reshape2)
+require(r) #no such package?
+
+
+norcal <- read_csv("data/NORCAL_OCT_PM25_ALL.csv")
+centcal <- read_csv("data/CENTCAL_OCT_PM25_ALL.csv")
+socal <- read_csv("data/SOCAL_OCT_PM25_ALL.csv")
+
+norcal <- head(norcal, -11)
+centcal <- head(centcal, -11)
+socal <- head(socal, -11)
+
+tail(norcal)
+tail(centcal)
+tail(socal)
+
+alldata <- rbind(norcal, centcal, socal) %>%
+  arrange(latitude)
+
+rm(list = c("norcal", "centcal", "socal"))
+```
+
+Prep time data:
+
+```{r}
+
+alldata$time<-strptime(alldata$date, "%Y-%m-%d")+3600*alldata$start_hour
+timedata <- strptime("10/1/17", "%m/%d/%y")+(0:767)*3600
+timedata <- as_data_frame(timedata)
+
+```
+
+Map PM 2.5 measurements to time values:
+
+```{r}
+
+indices <- list()
+
+for (i in 1:nrow(timedata)){
+  indices[i]<-list(which(alldata$time==timedata$value[i]))
+}
+
+timedata[unique(alldata$name)]<-NA
+
+for (i in unique(alldata$name)){
+  temp <- filter(alldata, name==i)
+  for (j in 1:nrow(temp)){
+    timedata[timedata$value==temp$time[j],i] <- temp$value[j]
+  }
+}
+
+rm(list=c("indices","temp","i","j"))
+
+```
+
+Plot heatmap and histogram of raw data:
+
+```{r fig.width=12, fig.height=14}
+timedata %>%
+  gather(place, pm25, -value) %>%
+  mutate(place = factor(place, levels = unique(place))) %>%
+  
+  ggplot(aes(place, value)) +
+  geom_raster(aes(fill = pm25,base = 10)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+timedata %>%
+  gather(place, pm25, -value) %>%
+  
+  ggplot(aes(x=pm25)) +
+  geom_histogram() +
+  scale_y_log10()
+
+```
+
+Tidy data:
+
+```{r fig.width=12, fig.height=14}
+
+timedata %>%
+  
+  #replace malfunctions with NA
+  replace(timedata<0|timedata>900&timedata<1200, NA) %>% 
+  
+  #remove less dependable sensors
+  .[(names(which(lapply(.[(8*24):(14*24),], function(x) sum(is.na(x))/768)<.1)))] -> timedata
+
+  
+  
+
+```
+
+
+Napa histogram:
+
+```{r}
+
+alldata %>%
+  filter(name=="Napa-Jefferson Avenue", time>"2017-10-9", time<"2017-10-17") %>%
+  ggplot(aes(value, x_label ="pm 2.5")) +
+  geom_histogram(bins = 20, col = "blue", fill = 'blue')
+
+```
+
+Compute rolling means and maxima:
+
+```{r}
+
+
+print("#The fraction of NAs in the raw data")
+sum(is.na(timedata))/prod(dim(timedata))
+
+mean12hr <- timedata
+mean12hr[-1] <- RcppRoll::roll_mean(as.matrix(timedata[-1]), n = 12, fill = NA, na.rm = T)
+print("#The fraction of NAs in the 12-hr rolling mean data")
+sum(is.na(mean12hr))/prod(dim(mean12hr))
+
+max12hr <- timedata
+max12hr[-1] <- roll_max(as.matrix(timedata[-1]), n = 12, fill = NA, na.rm = T)
+
+```
+
+Plot heatmap and histogram of rolling mean data:
+
+```{r fig.width=12, fig.height=14}
+max12hr %>%
+  gather(place, pm25, -value) %>%
+  mutate(place = factor(place, levels = unique(place))) %>%
+  
+  ggplot(aes(place, value)) +
+  geom_raster(aes(fill = pm25,base = 10)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+max12hr %>%
+  gather(place, pm25, -value) %>%
+  
+  ggplot(aes(x=pm25)) +
+  geom_histogram() +
+  scale_y_log10()
+
+mean12hr %>%
+  gather(place, pm25, -value) %>%
+  mutate(place = factor(place, levels = unique(place))) %>%
+  
+  ggplot(aes(place, value)) +
+  geom_raster(aes(fill = pm25,base = 10)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+mean12hr %>%
+  gather(place, pm25, -value) %>%
+  
+  ggplot(aes(x=pm25)) +
+  geom_histogram() +
+  scale_y_log10()
+
+```
+
+Spatial model:
+
+```{r}
+
+gather(timedata, place, pm25, -value) %>%
+  left_join(gather(mean12hr, place, mean12hr, -value)) %>%
+  left_join(gather(max12hr, place, max12hr, -value)) %>%
+  left_join(distinct(alldata, name, latitude, longitude), by = c("place"="name")) -> modeldata
+
+grd <- expand.grid(x = seq(min(modeldata$longitude)-.5, max(modeldata$longitude)+.5, by=.05),
+                   y = seq(min(modeldata$latitude)-.5, max(modeldata$latitude)+.5, by=.05))
+
+coordinates(grd) <- ~x +y
+
+gridded(grd) <- TRUE
+
+modeldata$hour <-  as.numeric(difftime(modeldata$value,"2017-10-01")/3600)
+
+idw.output <- list(1:length(unique(modeldata$hour)))
+
+for (i in 0:max(modeldata$hour)) {#0:max(modeldata$hour)
+  modeldata %>%
+    select_('hour', 'value', 'pm25', 'place', 'longitude', 'latitude') %>%
+    filter(hour == i) %>%
+    na.omit() -> testset
+
+  coordinates(testset) <- ~longitude + latitude
+
+  idw <- gstat::idw(formula = pm25~1, locations = testset, newdata = grd, nmax = 10)
+
+  idw.output[[i+1]] = as.data.frame(idw)
+}
+
+clonenorth <- idw.output
+
+for (i in 1:length(clonenorth)) {
+  coordinates(clonenorth[[i]]) <- ~x+y
+  gridded(clonenorth[[i]]) <- TRUE
+  clonenorth[[i]] <- raster(clonenorth[[i]])
+}
+
+
+```
+
+Raster stack:
+
+```{r}
+
+stack <- stack(clonenorth)
+
+counties<-readRDS("data/counties.rds")
+
+CA <- mask(stack, counties)
+
+names(CA) <- strptime("10/01/17", "%m/%d/%y")+0:767*3600
+
+pm25datasum <- stackApply(CA, rep(1,nlayers(CA)), fun = sum)/24
+plot(pm25datasum, legend.args=list(text = "micrograms*days/m^3"))
+lines(counties, col = "black")
+points(testset, col = "white")
+
+pm25datamax <- stackApply(CA, rep(1,nlayers(CA)), fun = max)
+plot(pm25datamax, legend.args=list(text = "max. micrograms/m^3"))
+lines(counties, col = "black")
+points(testset, col = "white")
+
+
+
+
+
+
+```
+
+Bay area spatial model:
+
+```{r}
+
+gather(timedata, place, pm25, -value) %>%
+  left_join(gather(mean12hr, place, mean12hr, -value)) %>%
+  left_join(gather(max12hr, place, max12hr, -value)) %>%
+  left_join(distinct(alldata, name, latitude, longitude), by = c("place"="name")) -> modeldata
+
+grd <- expand.grid(x = seq(-124, -120, by=.02),
+                   y = seq(36, 40, by=.02))
+
+coordinates(grd) <- ~x +y
+
+gridded(grd) <- TRUE
+
+modeldata$hour <-  as.numeric(difftime(modeldata$value,"2017-10-01")/3600)
+
+idw.output <- list(1:length(unique(modeldata$hour)))
+
+for (i in 0:max(modeldata$hour)) {#0:max(modeldata$hour)
+  modeldata %>%
+    select_('hour', 'value', 'pm25', 'place', 'longitude', 'latitude') %>%
+    filter(hour == i) %>%
+    na.omit() -> testset
+
+  coordinates(testset) <- ~longitude + latitude
+
+  idw <- idw(formula = pm25~1, locations = testset, newdata = grd, nmax = 4, idp =1)
+
+  
+  idw.output[[i+1]] = as.data.frame(idw)
+  
+  print(i)
+}
+
+clonenorth <- idw.output
+
+for (i in 1:length(clonenorth)) {
+  coordinates(clonenorth[[i]]) <- ~x+y
+  gridded(clonenorth[[i]]) <- TRUE
+  clonenorth[[i]] <- raster(clonenorth[[i]])
+}
+
+stack <- stack(clonenorth)
+
+counties<-readRDS("data/counties.rds")
+
+CA <- mask(stack, counties)
+
+names(CA) <- strptime("10/01/17", "%m/%d/%y")+0:767*3600
+
+pm25datasum <- stackApply(subset(CA,200:400), rep(1,nlayers(CA)), fun = sum)/24
+plot(pm25datasum, legend.args=list(text = "micrograms*days/m^3"))
+lines(counties, col = "black")
+points(testset, col = "white", pch = 19)
+
+pm25datamax <- stackApply(subset(CA,200:400), rep(1,nlayers(CA)), fun = max)
+plot(pm25datamax, legend.args=list(text = "max. micrograms/m^3"))
+lines(counties, col = "black")
+points(testset, col = "white", pch = 19)
+
+saveHTML(animate(subset(CA,200:400), n = 1), pause = .1)
+
+```
+
+Set up local farm data:
+
+```{r}
+
+farmdata <- read_csv("farmdata.csv", col_names = FALSE)
+
+farmdata %>%
+  separate(X6, into = c("long", "lat"), sep = ",") %>%
+  rename(number = X1, address = X2, Tiger = X3) %>%
+  mutate(long = as.numeric(long), lat = as.numeric(lat)) -> farmdata
+
+coordinates(farmdata) <- ~long+lat
+
+plot(farmdata)
+
+```
+
+Local PM 2.5 spatial contour plot:
+
+```{r}
+
+grd <- expand.grid(x = seq(-123, -122.5, by=.01),
+                   y = seq(38.1,38.7, by=.01))
+
+coordinates(grd) <- ~x +y
+
+gridded(grd) <- TRUE
+
+modeldata %>%
+  filter(latitude>35.4, latitude<41.4, longitude>-125, longitude<(-120.6), value>"2017-10-06", value<"2017-10-20", place!="Sebastopol-103 Morris Street") -> localpm25
+
+unique(localpm25$place)
+
+localpm25$hour <-  as.numeric(difftime(localpm25$value,"2017-10-01",units = "hour"))
+
+idw.output <- list(1)
+
+for (i in min(localpm25$hour):max(localpm25$hour)) {#0:max(modeldata$hour)
+  localpm25 %>%
+    select_('hour', 'value', 'pm25', 'place', 'longitude', 'latitude') %>%
+    filter(hour == i) %>%
+    na.omit() -> testset
+
+  coordinates(testset) <- ~longitude + latitude
+
+  idw <- idw(formula = pm25~1, locations = testset, newdata = grd, idp=1)
+
+  
+  idw.output[[i+1-min(localpm25$hour)]] = as.data.frame(idw)
+  
+  print(i)
+}
+
+clonenorth <- idw.output
+
+for (i in 1:length(clonenorth)) {
+  coordinates(clonenorth[[i]]) <- ~x+y
+  gridded(clonenorth[[i]]) <- TRUE
+  clonenorth[[i]] <- raster(clonenorth[[i]])
+}
+
+stack <- stack(clonenorth)
+
+pm25datasum <- stackApply(stack, rep(1,nlayers(stack)), fun = sum)/24
+contour(pm25datasum)
+points(farmdata, col = "red")
+points(localpm25$longitude,localpm25$latitude, col = "blue")
+
+```
+

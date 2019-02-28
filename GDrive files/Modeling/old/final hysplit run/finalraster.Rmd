@@ -1,0 +1,76 @@
+---
+title: "raster smoothing"
+author: "Jordan Wingenroth"
+date: "December 11, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(spatialEco)
+library(tiff)
+library(raster)
+library(rgdal)
+library(maps)
+library(dplyr)
+
+setwd("C:/Users/Jordan Wingenroth/Google Drive/Grad school/September 2017-/Sustainability & Society (ESPM 261)/Term project/Modeling/final hysplit run/model results")
+
+s1 <- shapefile("conc_sh01.shp")
+s2 <- shapefile("conc_sh02.shp")
+s3 <- shapefile("conc_sh03.shp")
+s5 <- shapefile("conc_sh05.shp")
+s6 <- shapefile("conc_sh06.shp")
+s9 <- shapefile("conc_sh09.shp")
+s10 <- shapefile("conc_sh10.shp")
+s11 <- shapefile("conc_sh11.shp")
+
+```
+
+```{r}
+
+setwd("C:/Users/Jordan Wingenroth/Google Drive/Grad school/September 2017-/Sustainability & Society (ESPM 261)/Term project/Modeling")
+
+farmdata <- readOGR("farmdata.shp")
+
+canvas <- raster(ncol = 200, nrow = 200)
+extent(canvas) <- extend(extent(farmdata), .1)
+
+r1<-rasterize(s1, canvas)
+r2<-rasterize(s2, canvas)
+r3<-rasterize(s3, canvas)
+r5<-rasterize(s5, canvas)
+r6<-rasterize(s6, canvas)
+r9<-rasterize(s9, canvas)
+r10<-rasterize(s10, canvas)
+r11<-rasterize(s11, canvas)
+
+```
+
+```{r}
+
+s <- stack(c(r1,r2,r3,r5,r6,r9,r10,r11))
+
+sum <- sum(s, na.rm = T)
+
+sum_smooth <- raster.gaussian.smooth(sum, sigma = 4, n = 31)
+
+plot(sum, main = "Pollution Exposure, October 8-23, 2017, Sonoma County", xlab= "Long", ylab = "Lat")
+plot(farmdata, add = T)
+text(farmdata$long, farmdata$lat, labels = farmdata$Key, cex=.5, pos=1)
+
+table <- data.frame(Key = farmdata$Key, Smoothed = extract(sum_smooth, farmdata), Raw = extract(sum, farmdata))
+
+table %>%
+  mutate(Smoothed = Smoothed/max(Smoothed), Raw = Raw/max(Raw))
+
+write.csv(table, file = "table.csv")
+
+```
+
+
+
+

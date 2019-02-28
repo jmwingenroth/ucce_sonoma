@@ -1,0 +1,130 @@
+---
+title: "data 3-28-18"
+author: "Jordan Wingenroth"
+date: "March 28, 2018"
+output: html_document
+---
+
+```{r libs}
+
+library(tidyverse)
+library(zoo)
+library(maps)
+
+```
+
+```{r import data}
+
+data<-as.tibble(read.csv("data/alldata.csv"))
+
+```
+
+```{r}
+
+#Are latitudes and longitudes consistent for data from a single station?
+
+data %>%
+  group_by(name) %>%
+  summarise(maxlat=max(latitude), minlat=min(latitude)) %>%
+  mutate(equal=maxlat==minlat) %>%
+  distinct(equal)
+
+#Yes
+
+```
+
+```{r}
+
+#Are there any rows empty?
+
+data %>%
+  mutate(missingdata = is.na(value)) %>%
+  distinct(missingdata)
+
+#No
+
+```
+
+```{r}
+
+#What stations are within .6 degree Lat/Long of Napa?
+
+data %>%
+  filter(grepl("Napa",name)) %>%
+  distinct(latitude,longitude) -> napaloc
+
+data %>%
+  filter(abs(latitude-napaloc$latitude)<.6,
+         abs(longitude-napaloc$longitude)<.6) %>%
+  distinct(name) -> nearby
+
+#Oakland, Berkeley, Concord, San Pablo, San Rafael, Vallejo, Vacaville, Sebastopol (and Napa)
+
+
+
+#Let's cut it to those stations for tidyness
+
+data %>%
+  filter(name %in% nearby$name) -> tidy
+
+```
+
+```{r}
+
+#Let's graph the daily maximum values over October for these stations
+
+tidy %>%
+  group_by(name, date) %>%
+  summarise(max = max(value)) %>%
+  filter(max<900) %>%
+  ungroup() -> dailymax
+
+dailymax %>%
+  filter(grepl("Berkeley|Sebastopol|Napa|San Fran|Vacaville|Concord|San Rafael|Vallejo", name)) %>%
+  mutate(date = as.Date(date, format = "%m/%d/%Y")) %>%
+  ggplot(aes(date, max, group = name, fill = name)) +
+  facet_grid(name~.) +
+  geom_col() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ylab("micrograms per cubic meter: daily maximum")
+
+```
+
+```{r}
+
+#Now to calculate total max and average for each station
+
+tidy %>%
+  group_by(name) %>%
+  filter(value<900, str_sub(date,1,2)=="10") %>%
+  mutate(decimalday = as.numeric(str_sub(str_extract(date, "/.*/"),2,-2)) + as.numeric(start_hour)/24) %>%
+  ungroup() %>%
+  select(date, start_hour, value, units, name, decimalday, latitude, longitude)-> tidy
+         
+tidy %>%
+  filter(grepl("Berkeley|Sebastopol|Napa|San Fran|Vacaville|Concord|San Rafael|Vallejo", name), decimalday>7, decimalday<20) %>%
+  group_by(name) %>%
+  summarize(max = max(value), avg = mean(value), latitude = mean(latitude), longitude = mean(longitude)) -> stats
+
+write.csv(stats, "pm_2.5_ug_per_m3_10-7_thru_10-20.csv")
+    
+```
+
+```{r}
+
+#A map of the sites
+
+map("state")
+
+stats %>%
+  distinct(latitude,longitude,name) %>%
+  ggplot(aes(longitude,latitude, label = name)) +
+  geom_point() +
+  geom_text(hjust = "inward", vjust = "inward") +
+  coord_equal()
+
+map %>%
+  ggplot(long, lat) +
+  geom_line()
+```
+

@@ -1,0 +1,512 @@
+arrange(-n) %>%
+ggplot(aes(time, fill = reorder(factor(category),n))) +
+geom_histogram(binwidth = 1/60) #guides(fill = guide_legend(reverse = TRUE))
+mins %>%
+group_by(category) %>%
+mutate(n = n()) %>%
+ungroup() %>%
+arrange(-n) %>%
+ggplot(aes(time, fill = reorder(factor(category),-n))) +
+geom_histogram(binwidth = 1/60) #guides(fill = guide_legend(reverse = TRUE))
+mins %>%
+group_by(category) %>%
+mutate(n = n()) %>%
+ggplot(aes(time, fill = reorder(factor(category),-n))) +
+geom_histogram(binwidth = 1/60) #guides(fill = guide_legend(reverse = TRUE))
+mins %>%
+group_by(category) %>%
+mutate(n = n()) %>%
+ggplot(aes(time, fill = reorder(factor(category),-n))) +
+geom_histogram(binwidth = 1/60) +
+guides(fill = guide_legend(reverse = TRUE))
+mins %>%
+group_by(category) %>%
+mutate(n = n()) %>%
+ggplot(aes(time, fill = reorder(factor(category),n))) +
+geom_histogram(binwidth = 1/60) +
+guides(fill = guide_legend(reverse = TRUE))
+f
+knitr::opts_chunk$set(echo = TRUE)
+log %>%
+mutate_at(vars(Start.time, Break.time), funs(as.POSIXct(., format = "%m/%d/%Y %H:%M:%S"))) %>%
+select(1,2,3) -> df
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(stringr)
+setwd("C:/Users/Jordan Wingenroth/Downloads")
+log <- read.csv("productivity log - log.csv")
+hist(as.POSIXlt(log$Start.time, format = "%m/%d/%Y %H:%M:%S")$hour, xlab = "Hour", breaks = 24, col = rgb(1,0,0,.5), main = "red is start, blue is stop")
+hist(as.POSIXlt(log$Break.time, format = "%m/%d/%Y %H:%M:%S")$hour, xlab = "Hour", breaks = 24, col = rgb(0,0,1,.5), add = TRUE)
+log %>%
+mutate_at(vars(Start.time, Break.time), funs(as.POSIXct(., format = "%m/%d/%Y %H:%M:%S"))) %>%
+select(1,2,3) -> df
+mins <- data.frame(time = as.POSIXct("2017-1-1"), project = "temp")
+for (i in 1:nrow(df)) {
+tmp <- as.data.frame(as.character(seq.POSIXt(df$Start.time[i], df$Break.time[i], by = "min")))
+tmp <- cbind(tmp, df$Project.and.or.Task..General.Tags[i])
+names(tmp) <- c("time", "project")
+mins <- rbind(mins, tmp)
+}
+mins <- as_tibble(mins[-1,])
+names(mins) <- c("time", "project")
+mins %>%
+mutate(time = as.POSIXct(time)) %>%
+mutate(time = as.numeric(format(time, "%H")) + as.numeric(format(time, "%M"))/60) -> mins
+mins %>%
+mutate(category = toupper(project)) %>%
+mutate(category = str_extract(category, "IRES|E-MAIL|S&S")) -> mins
+mins %>%
+group_by(category) %>%
+mutate(n = n()) %>%
+ggplot(aes(time, fill = reorder(factor(category),n))) +
+geom_histogram(binwidth = 1/2) +
+guides(fill = guide_legend(reverse = TRUE))
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(stringr)
+setwd("C:/Users/Jordan Wingenroth/Downloads")
+log <- read.csv("productivity log - log.csv")
+hist(as.POSIXlt(log$Start.time, format = "%m/%d/%Y %H:%M:%S")$hour, xlab = "Hour", breaks = 24, col = rgb(1,0,0,.5), main = "red is start, blue is stop")
+hist(as.POSIXlt(log$Break.time, format = "%m/%d/%Y %H:%M:%S")$hour, xlab = "Hour", breaks = 24, col = rgb(0,0,1,.5), add = TRUE)
+log %>%
+mutate_at(vars(Start.time, Break.time), funs(as.POSIXct(., format = "%m/%d/%Y %H:%M:%S"))) %>%
+select(1,2,3) -> df
+mins <- data.frame(time = as.POSIXct("2017-1-1"), project = "temp")
+for (i in 1:nrow(df)) {
+tmp <- as.data.frame(as.character(seq.POSIXt(df$Start.time[i], df$Break.time[i], by = "min")))
+tmp <- cbind(tmp, df$Project.and.or.Task..General.Tags[i])
+names(tmp) <- c("time", "project")
+mins <- rbind(mins, tmp)
+}
+mins <- as_tibble(mins[-1,])
+names(mins) <- c("time", "project")
+mins %>%
+mutate(time = as.POSIXct(time)) %>%
+mutate(time = as.numeric(format(time, "%H")) + as.numeric(format(time, "%M"))/60) -> mins
+mins %>%
+mutate(category = toupper(project)) %>%
+mutate(category = str_extract(category, "IRES|E-MAIL|S&S")) -> mins
+mins %>%
+group_by(category) %>%
+mutate(n = n()) %>%
+ggplot(aes(time, fill = reorder(factor(category),n))) +
+geom_histogram(binwidth = 1/2) +
+guides(fill = guide_legend(reverse = TRUE))
+log %>%
+mutate_at(vars(Start.time, Break.time), funs(as.POSIXct(., format = "%m/%d/%Y %H:%M:%S"))) %>%
+select(1,2,3) -> df
+mins <- data.frame(time = as.POSIXct("2017-1-1"), project = "temp")
+for (i in 1:nrow(df)) {
+tmp <- as.data.frame(as.character(seq.POSIXt(df$Start.time[i], df$Break.time[i], by = "min")))
+tmp <- cbind(tmp, df$Project.and.or.Task..General.Tags[i])
+names(tmp) <- c("time", "project")
+mins <- rbind(mins, tmp)
+}
+mins <- as_tibble(mins[-1,])
+names(mins) <- c("time", "project")
+mins %>%
+mutate(time = as.POSIXct(time)) %>%
+mutate(time = as.numeric(format(time, "%H")) + as.numeric(format(time, "%M"))/60) -> mins
+mins %>%
+mutate(category = toupper(project)) %>%
+mutate(category = str_extract(category, "IRES|E-MAIL|S&S")) -> mins
+mins %>%
+group_by(category) %>%
+mutate(n = n()) %>%
+ggplot(aes(time, fill = reorder(factor(category),n))) +
+geom_histogram(binwidth = 1/6) +
+guides(fill = guide_legend(reverse = TRUE))
+mins %>%
+group_by(category) %>%
+mutate(n = n()) %>%
+ggplot(aes(time, fill = reorder(factor(category),n))) +
+geom_histogram(binwidth = 1) +
+guides(fill = guide_legend(reverse = TRUE))
+mins %>%
+group_by(category) %>%
+mutate(n = n()) %>%
+ggplot(aes(time, fill = reorder(factor(category),n))) +
+geom_histogram(binwidth = 1/60) +
+guides(fill = guide_legend(reverse = TRUE))
+mins %>%
+group_by(category) %>%
+mutate(n = n()) %>%
+ggplot(aes(time, fill = reorder(factor(category),n))) +
+geom_histogram(binwidth = 1) +
+guides(fill = guide_legend(reverse = TRUE))
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(stringr)
+setwd("C:/Users/Jordan Wingenroth/Downloads")
+log <- read.csv("productivity log - log.csv")
+hist(as.POSIXlt(log$Start.time, format = "%m/%d/%Y %H:%M:%S")$hour, xlab = "Hour", breaks = 24, col = rgb(1,0,0,.5), main = "red is start, blue is stop")
+hist(as.POSIXlt(log$Break.time, format = "%m/%d/%Y %H:%M:%S")$hour, xlab = "Hour", breaks = 24, col = rgb(0,0,1,.5), add = TRUE)
+log %>%
+mutate_at(vars(Start.time, Break.time), funs(as.POSIXct(., format = "%m/%d/%Y %H:%M:%S"))) %>%
+select(1,2,3) -> df
+mins <- data.frame(time = as.POSIXct("2017-1-1"), project = "temp")
+for (i in 1:nrow(df)) {
+tmp <- as.data.frame(as.character(seq.POSIXt(df$Start.time[i], df$Break.time[i], by = "min")))
+tmp <- cbind(tmp, df$Project.and.or.Task..General.Tags[i])
+names(tmp) <- c("time", "project")
+mins <- rbind(mins, tmp)
+}
+mins <- as_tibble(mins[-1,])
+names(mins) <- c("time", "project")
+mins %>%
+mutate(time = as.POSIXct(time)) %>%
+mutate(time = as.numeric(format(time, "%H")) + as.numeric(format(time, "%M"))/60) -> mins
+mins %>%
+mutate(category = toupper(project)) %>%
+mutate(category = str_extract(category, "IRES|E-MAIL|S&S")) -> mins
+mins %>%
+group_by(category) %>%
+mutate(n = n()) %>%
+ggplot(aes(time, fill = reorder(factor(category),n))) +
+geom_histogram(binwidth = 1) +
+guides(fill = guide_legend(reverse = TRUE))
+View(df)
+View(log)
+as.Date(log$Start.time)
+as.Date(log$Start.time, format = "%m/%d/%Y")
+log %>%
+group_by(as.Date(log$Start.time, format = "%m/%d/%Y")) %>%
+summarise(Duration..minutes., sum())
+summarise(sum(Duration..minutes.)
+summarise(sum(Duration..minutes.)
+group_by(as.Date(log$Start.time, format = "%m/%d/%Y")) %>%
+log %>%
+group_by(as.Date(log$Start.time, format = "%m/%d/%Y")) %>%
+summarise(sum(Duration..minutes.))
+log %>%
+group_by(as.Date(log$Start.time, format = "%m/%d/%Y")) %>%
+summarise(sum(Duration..minutes.))
+log %>%
+group_by(as.Date(log$Start.time, format = "%m/%d/%Y")) %>%
+summarise(time = sum(Duration..minutes.)) %>%
+log %>%
+group_by(as.Date(log$Start.time, format = "%m/%d/%Y")) %>%
+summarise(time = sum(Duration..minutes.))
+log %>%
+group_by(as.Date(log$Start.time, format = "%m/%d/%Y")) %>%
+summarise(time = sum(Duration..minutes.))
+log %>%
+group_by(day = as.Date(log$Start.time, format = "%m/%d/%Y")) %>%
+summarise(time = sum(Duration..minutes.))
+log %>%
+group_by(day = as.Date(log$Start.time, format = "%m/%d/%Y")) %>%
+summarise(work = sum(Duration..minutes.))
+log %>%
+group_by(day = as.Date(log$Start.time, format = "%m/%d/%Y")) %>%
+summarise(work = sum(Duration..minutes.)) %>%
+ggplot(aes(x = day, y = work)) +
+geom_histogram(stat = "identity")
+log %>%
+group_by(day = as.Date(log$Start.time, format = "%m/%d/%Y")) %>%
+summarise(work = sum(Duration..minutes.)) %>%
+ggplot(aes(x = day, y = work)) +
+geom_bar()
+log %>%
+group_by(day = as.Date(log$Start.time, format = "%m/%d/%Y")) %>%
+summarise(work = sum(Duration..minutes.)) %>%
+ggplot(aes(x = day, y = work)) +
+geom_point()
+log %>%
+group_by(day = as.Date(log$Start.time, format = "%m/%d/%Y")) %>%
+summarise(work_hrs = sum(Duration..minutes.)/60) %>%
+ggplot(aes(x = day, y = work)) +
+geom_point()
+log %>%
+group_by(day = as.Date(log$Start.time, format = "%m/%d/%Y")) %>%
+summarise(work_hrs = sum(Duration..minutes.)/60) %>%
+ggplot(aes(x = day, y = work_hrs)) +
+geom_point()
+log %>%
+group_by(day = as.Date(log$Start.time, format = "%m/%d/%Y")) %>%
+summarise(work_hrs = sum(Duration..minutes.)/60) %>%
+ggplot(aes(x = day, y = work_hrs)) +
+geom_histogram()
+log %>%
+group_by(day = as.Date(log$Start.time, format = "%m/%d/%Y")) %>%
+summarise(work_hrs = sum(Duration..minutes.)/60) %>%
+ggplot(aes(x = day, y = work_hrs)) +
+geom_area()
+log %>%
+select(project = Project.and.or.Task..General.Tags, Start.time, Duration..minutes.) %>%
+mutate(category = toupper(project)) %>%
+mutate(category = str_extract(category, "IRES|E-MAIL|S&S"))
+log %>%
+select(project = Project.and.or.Task..General.Tags, Start.time, Duration..minutes.) %>%
+mutate(category = toupper(project)) %>%
+mutate(category = str_extract(category, "IRES|E-MAIL|S&S")) %>%
+group_by(day = as.Date(log$Start.time, format = "%m/%d/%Y"), category) %>%
+summarise(work_hrs = sum(Duration..minutes.)/60) %>%
+ggplot(aes(x = day, y = work_hrs, fill = category)) +
+geom_area()
+log %>%
+select(project = Project.and.or.Task..General.Tags, Start.time, Duration..minutes.) %>%
+mutate(category = toupper(project)) %>%
+mutate(category = str_extract(category, "IRES|E-MAIL|S&S")) %>%
+group_by(day = as.Date(log$Start.time, format = "%m/%d/%Y"), category) %>%
+summarise(work_hrs = sum(Duration..minutes.)/60) %>%
+ggplot(aes(x = day, y = work_hrs, fill = category)) +
+geom_point()
+log %>%
+select(project = Project.and.or.Task..General.Tags, Start.time, Duration..minutes.) %>%
+mutate(category = toupper(project)) %>%
+mutate(category = str_extract(category, "IRES|E-MAIL|S&S")) %>%
+group_by(day = as.Date(log$Start.time, format = "%m/%d/%Y"), category) %>%
+summarise(work_hrs = sum(Duration..minutes.)/60) %>%
+ggplot(aes(x = day, y = work_hrs, col = category)) +
+geom_point()
+log %>%
+select(project = Project.and.or.Task..General.Tags, Start.time, Duration..minutes.) %>%
+mutate(category = toupper(project)) %>%
+mutate(category = str_extract(category, "IRES|E-MAIL|S&S")) %>%
+group_by(day = as.Date(log$Start.time, format = "%m/%d/%Y"), category) %>%
+summarise(work_hrs = sum(Duration..minutes.)/60) %>%
+ggplot(aes(x = day, y = work_hrs, col = category)) +
+geom_bar()
+log %>%
+select(project = Project.and.or.Task..General.Tags, Start.time, Duration..minutes.) %>%
+mutate(category = toupper(project)) %>%
+mutate(category = str_extract(category, "IRES|E-MAIL|S&S")) %>%
+group_by(day = as.Date(log$Start.time, format = "%m/%d/%Y"), category) %>%
+summarise(work_hrs = sum(Duration..minutes.)/60) %>%
+ggplot(aes(x = day, y = work_hrs, col = category)) +
+geom_freqpoly()
+log %>%
+select(project = Project.and.or.Task..General.Tags, Start.time, Duration..minutes.) %>%
+mutate(category = toupper(project)) %>%
+mutate(category = str_extract(category, "IRES|E-MAIL|S&S")) %>%
+group_by(day = as.Date(log$Start.time, format = "%m/%d/%Y"), category) %>%
+summarise(work_hrs = sum(Duration..minutes.)/60) %>%
+ggplot(aes(x = day, y = work_hrs, col = category)) +
+geom_histogram(stat = "identity")
+log %>%
+select(project = Project.and.or.Task..General.Tags, Start.time, Duration..minutes.) %>%
+mutate(category = toupper(project)) %>%
+mutate(category = str_extract(category, "IRES|E-MAIL|S&S")) %>%
+group_by(day = as.Date(log$Start.time, format = "%m/%d/%Y"), category) %>%
+summarise(work_hrs = sum(Duration..minutes.)/60) %>%
+ggplot(aes(x = day, y = work_hrs, col = category)) +
+geom_point()
+log %>%
+select(project = Project.and.or.Task..General.Tags, Start.time, Duration..minutes.) %>%
+mutate(category = toupper(project)) %>%
+mutate(category = str_extract(category, "IRES|E-MAIL|S&S")) %>%
+group_by(day = as.Date(log$Start.time, format = "%m/%d/%Y"), category) %>%
+summarise(work_hrs = sum(Duration..minutes.)/60) %>%
+ggplot(aes(x = day, y = work_hrs, col = category)) +
+geom_histogram(stat = "identity") +
+scale_x_date(breaks = "day")
+log %>%
+select(project = Project.and.or.Task..General.Tags, Start.time, Duration..minutes.) %>%
+mutate(category = toupper(project)) %>%
+mutate(category = str_extract(category, "IRES|E-MAIL|S&S")) %>%
+group_by(day = as.Date(log$Start.time, format = "%m/%d/%Y"), category) %>%
+summarise(work_hrs = sum(Duration..minutes.)/60) %>%
+ggplot(aes(x = day, y = work_hrs, col = category)) +
+geom_histogram(stat = "identity", breaks = 1) +
+log %>%
+select(project = Project.and.or.Task..General.Tags, Start.time, Duration..minutes.) %>%
+mutate(category = toupper(project)) %>%
+mutate(category = str_extract(category, "IRES|E-MAIL|S&S")) %>%
+group_by(day = as.Date(log$Start.time, format = "%m/%d/%Y"), category) %>%
+summarise(work_hrs = sum(Duration..minutes.)/60) %>%
+ggplot(aes(x = day, y = work_hrs, col = category)) +
+geom_histogram(stat = "identity", breaks = 1) +
+log %>%
+select(project = Project.and.or.Task..General.Tags, Start.time, Duration..minutes.) %>%
+mutate(category = toupper(project)) %>%
+mutate(category = str_extract(category, "IRES|E-MAIL|S&S")) %>%
+group_by(day = as.Date(log$Start.time, format = "%m/%d/%Y"), category) %>%
+summarise(work_hrs = sum(Duration..minutes.)/60) %>%
+ggplot(aes(x = day, y = work_hrs, col = category)) +
+geom_histogram(stat = "identity", breaks = 1)
+log %>%
+select(project = Project.and.or.Task..General.Tags, Start.time, Duration..minutes.) %>%
+mutate(category = toupper(project)) %>%
+mutate(category = str_extract(category, "IRES|E-MAIL|S&S")) %>%
+group_by(day = as.Date(log$Start.time, format = "%m/%d/%Y"), category) %>%
+summarise(work_hrs = sum(Duration..minutes.)/60) %>%
+ggplot(aes(x = day, y = work_hrs, col = category)) +
+geom_histogram()
+log %>%
+select(project = Project.and.or.Task..General.Tags, Start.time, Duration..minutes.) %>%
+mutate(category = toupper(project)) %>%
+mutate(category = str_extract(category, "IRES|E-MAIL|S&S")) %>%
+group_by(day = as.Date(log$Start.time, format = "%m/%d/%Y"), category) %>%
+summarise(work_hrs = sum(Duration..minutes.)/60) %>%
+ggplot(aes(x = day, y = work_hrs, col = category)) +
+geom_line()
+log %>%
+select(project = Project.and.or.Task..General.Tags, Start.time, Duration..minutes.) %>%
+mutate(category = toupper(project)) %>%
+mutate(category = str_extract(category, "IRES|E-MAIL|S&S|FIELD")) %>%
+group_by(day = as.Date(log$Start.time, format = "%m/%d/%Y"), category) %>%
+summarise(work_hrs = sum(Duration..minutes.)/60) %>%
+ggplot(aes(x = day, y = work_hrs, col = category)) +
+geom_line()
+View(log)
+log %>%
+select(project = Project.and.or.Task..General.Tags, Start.time, Duration..minutes.) %>%
+mutate(category = toupper(project)) %>%
+mutate(category = str_extract(category, "IRES|E-MAIL|S&S|FIELD"))
+log %>%
+select(project = Project.and.or.Task..General.Tags, Start.time, Duration..minutes.) %>%
+mutate(category = toupper(project)) %>%
+mutate(category = str_extract(category, "IRES|E-MAIL|S&S|FIELD"))
+group_by(day = as.Date(log$Start.time, format = "%m/%d/%Y"), category) %>%
+summarise(work_hrs = sum(Duration..minutes.)/60) %>%
+ggplot(aes(x = day, y = work_hrs, col = category)) +
+geom_line()
+log %>%
+select(project = Project.and.or.Task..General.Tags, Start.time, Duration..minutes.) %>%
+mutate(category = toupper(project)) %>%
+mutate(category = str_extract(category, "IRES|E-MAIL|S&S|FIELD")) %>%
+group_by(day = as.Date(log$Start.time, format = "%m/%d/%Y"), category) %>%
+summarise(work_hrs = sum(Duration..minutes.)/60) %>%
+ggplot(aes(x = day, y = work_hrs, col = category)) +
+geom_line()
+log %>%
+select(project = Project.and.or.Task..General.Tags, Start.time, Duration..minutes.) %>%
+mutate(category = toupper(project)) %>%
+mutate(category = str_extract(category, "IRES|E-MAIL|S&S|COYOTE")) %>%
+group_by(day = as.Date(log$Start.time, format = "%m/%d/%Y"), category) %>%
+summarise(work_hrs = sum(Duration..minutes.)/60) %>%
+ggplot(aes(x = day, y = work_hrs, col = category)) +
+geom_line()
+log %>%
+select(project = Project.and.or.Task..General.Tags, Start.time, Duration..minutes.) %>%
+mutate(category = toupper(project)) %>%
+mutate(category = str_extract(category, "IRES|E-MAIL|S&S|COYOTE")) %>%
+group_by(day = as.Date(log$Start.time, format = "%m/%d/%Y"), category) %>%
+summarise(work_hrs = sum(Duration..minutes.)/60) %>%
+ggplot(aes(x = day, y = work_hrs, col = category)) +
+geom_point()
+log %>%
+select(project = Project.and.or.Task..General.Tags, Start.time, Duration..minutes.) %>%
+mutate(category = toupper(project)) %>%
+mutate(category = str_extract(category, "IRES|E-MAIL|S&S|COYOTE")) %>%
+group_by(day = as.Date(log$Start.time, format = "%m/%d/%Y"), category) %>%
+summarise(work_hrs = sum(Duration..minutes.)/60) %>%
+ggplot(aes(x = day, y = work_hrs, col = category)) +
+geom_bar(stat = "identity")
+log %>%
+select(project = Project.and.or.Task..General.Tags, Start.time, Duration..minutes.) %>%
+mutate(category = toupper(project)) %>%
+mutate(category = str_extract(category, "IRES|E-MAIL|S&S|COYOTE")) %>%
+group_by(day = as.Date(log$Start.time, format = "%m/%d/%Y"), category) %>%
+summarise(work_hrs = sum(Duration..minutes.)/60) %>%
+ggplot(aes(x = day, y = work_hrs, fill = category)) +
+geom_bar(stat = "identity")
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(stringr)
+setwd("C:/Users/Jordan Wingenroth/Downloads")
+log <- read.csv("productivity log - log.csv")
+hist(as.POSIXlt(log$Start.time, format = "%m/%d/%Y %H:%M:%S")$hour, xlab = "Hour", breaks = 24, col = rgb(1,0,0,.5), main = "red is start, blue is stop")
+hist(as.POSIXlt(log$Break.time, format = "%m/%d/%Y %H:%M:%S")$hour, xlab = "Hour", breaks = 24, col = rgb(0,0,1,.5), add = TRUE)
+log %>%
+mutate_at(vars(Start.time, Break.time), funs(as.POSIXct(., format = "%m/%d/%Y %H:%M:%S"))) %>%
+select(1,2,3) -> df
+mins <- data.frame(time = as.POSIXct("2017-1-1"), project = "temp")
+for (i in 1:nrow(df)) {
+tmp <- as.data.frame(as.character(seq.POSIXt(df$Start.time[i], df$Break.time[i], by = "min")))
+tmp <- cbind(tmp, df$Project.and.or.Task..General.Tags[i])
+names(tmp) <- c("time", "project")
+mins <- rbind(mins, tmp)
+}
+mins <- as_tibble(mins[-1,])
+names(mins) <- c("time", "project")
+mins %>%
+mutate(time = as.POSIXct(time)) %>%
+mutate(time = as.numeric(format(time, "%H")) + as.numeric(format(time, "%M"))/60) -> mins
+mins %>%
+mutate(category = toupper(project)) %>%
+mutate(category = str_extract(category, "IRES|E-MAIL|S&S")) -> mins
+mins %>%
+group_by(category) %>%
+mutate(n = n()) %>%
+ggplot(aes(time, fill = reorder(factor(category),n))) +
+geom_histogram(binwidth = 1) +
+guides(fill = guide_legend(reverse = TRUE))
+log %>%
+select(project = Project.and.or.Task..General.Tags, Start.time, Duration..minutes.) %>%
+mutate(category = toupper(project)) %>%
+mutate(category = str_extract(category, "IRES|E-MAIL|S&S|COYOTE")) %>%
+group_by(day = as.Date(log$Start.time, format = "%m/%d/%Y"), category) %>%
+summarise(work_hrs = sum(Duration..minutes.)/60) %>%
+ggplot(aes(x = day, y = work_hrs, fill = category)) +
+geom_bar(stat = "identity")
+install.packages("PuffR")
+devtools::install_github('PuffR','rich-iannone')
+library(PuffR)
+?PuffR
+setwd("C:/Users/Jordan Wingenroth/Google Drive/Grad school/September 2017-/Sustainability & Society (ESPM 261)/Term project/Modeling/puffr")
+library(PuffR)
+calmet_define_geophys(location_name = "Sonoma County",
+lat_dec_deg = 38.4,
+lon_dec_deg = -122.7,
+lat_lon_grid_loc = 1,
+domain_width_m = 100000,
+domain_height_m = 100000,
+cell_resolution_m = 2000)
+install.packages("MODISTools")
+install_github("seantuck12/MODISTools", build_vignettes = TRUE)
+devtools::install_github("seantuck12/MODISTools", build_vignettes = TRUE)
+calmet_define_geophys(location_name = "Sonoma County",
+lat_dec_deg = 38.4,
+lon_dec_deg = -122.7,
+lat_lon_grid_loc = 1,
+domain_width_m = 100000,
+domain_height_m = 100000,
+cell_resolution_m = 2000)
+install("SplitR")
+install.packages("SplitR")
+devtools::install_github("rich-iannone/SplitR")
+remove.packages('scales')
+install.packages('scales')
+install.packages("scales")
+devtools::install_github("rich-iannone/SplitR")
+install.packages('crosstalk')
+devtools::install_github("rich-iannone/SplitR")
+install.packages('rlang')
+devtools::install_github("rich-iannone/SplitR")
+install.packages('devtools')
+install.packages("devtools")
+devtools::install_github("rich-iannone/SplitR")
+install.packages('bindrcpp')
+devtools::install_github("rich-iannone/SplitR")
+install.packages('glue')
+devtools::install_github("rich-iannone/SplitR")
+install.packages('pkgconfig')
+devtools::install_github("rich-iannone/SplitR")
+install.packages('tibble')
+devtools::install_github("rich-iannone/SplitR")
+library(SplitR)
+source('C:/Users/Jordan Wingenroth/Google Drive/Grad school/September 2017-/Sustainability & Society (ESPM 261)/Term project/Modeling/puffr/puffr script.R', echo=TRUE)
+test
+source('C:/Users/Jordan Wingenroth/Google Drive/Grad school/September 2017-/Sustainability & Society (ESPM 261)/Term project/Modeling/puffr/splitr script.R', echo=TRUE)
+source('C:/Users/Jordan Wingenroth/Google Drive/Grad school/September 2017-/Sustainability & Society (ESPM 261)/Term project/Modeling/puffr/splitr script.R', echo=TRUE)
+source('C:/Users/Jordan Wingenroth/Google Drive/Grad school/September 2017-/Sustainability & Society (ESPM 261)/Term project/Modeling/puffr/splitr script.R', echo=TRUE)
+trajectory_df <-
+trajectory_model %>% get_output_df()
+height = 50,
+duration = 6,
+run_period = "2015-07-01",
+daily_hours = c(0, 12),
+direction = "backward",
+met_type = "reanalysis") %>%
+run_model()
+source('C:/Users/Jordan Wingenroth/Google Drive/Grad school/September 2017-/Sustainability & Society (ESPM 261)/Term project/Modeling/puffr/splitr script.R', echo=TRUE)
+source('C:/Users/Jordan Wingenroth/Google Drive/Grad school/September 2017-/Sustainability & Society (ESPM 261)/Term project/Modeling/puffr/splitr script.R', echo=TRUE)
+height = 50,
+duration = 6,
+run_period = "2015-07-01",
+daily_hours = c(0, 12),
+direction = "backward",
+met_type = "reanalysis") %>%
+run_model()
+source('C:/Users/Jordan Wingenroth/Google Drive/Grad school/September 2017-/Sustainability & Society (ESPM 261)/Term project/Modeling/puffr/splitr script.R', echo=TRUE)

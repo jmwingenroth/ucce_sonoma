@@ -1,0 +1,512 @@
+dailymax %>%
+filter(grepl("Berkeley|Sebastopol|Napa|San Fran|Vacaville|Concord|San Rafael|Vallejo", name)) %>%
+mutate(date = as.Date(date, format = "%m/%d/%Y")) %>%
+ggplot(aes(date, max, color = name, group = name)) +
+facet_grid(name~.) +
+geom_line() +
+theme(axis.text.x = element_text(angle = 90, hjust = 1))
+tidy %>%
+group_by(name, date) %>%
+summarise(max = max(value)) %>%
+filter(value<900) %>%
+ungroup() -> dailymax
+tidy %>%
+group_by(name, date) %>%
+summarise(max = max(value)) %>%
+filter(max<900) %>%
+ungroup() -> dailymax
+dailymax %>%
+filter(grepl("Berkeley|Sebastopol|Napa|San Fran|Vacaville|Concord|San Rafael|Vallejo", name)) %>%
+mutate(date = as.Date(date, format = "%m/%d/%Y")) %>%
+ggplot(aes(date, max, color = name, group = name)) +
+facet_grid(name~.) +
+geom_line() +
+theme(axis.text.x = element_text(angle = 90, hjust = 1))
+dailymax %>%
+filter(grepl("Berkeley|Sebastopol|Napa|San Fran|Vacaville|Concord|San Rafael|Vallejo", name)) %>%
+mutate(date = as.Date(date, format = "%m/%d/%Y")) %>%
+ggplot(aes(date, max, color = name, group = name)) +
+facet_grid(name~.) +
+geom_col() +
+theme(axis.text.x = element_text(angle = 90, hjust = 1))
+unique(data$units)
+dailymax %>%
+filter(grepl("Berkeley|Sebastopol|Napa|San Fran|Vacaville|Concord|San Rafael|Vallejo", name)) %>%
+mutate(date = as.Date(date, format = "%m/%d/%Y")) %>%
+ggplot(aes(date, max, color = name, group = name)) +
+facet_grid(name~.) +
+geom_col() +
+theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+ylab("micrograms per cubic meter: daily maximum")
+dailymax %>%
+filter(grepl("Berkeley|Sebastopol|Napa|San Fran|Vacaville|Concord|San Rafael|Vallejo", name)) %>%
+mutate(date = as.Date(date, format = "%m/%d/%Y")) %>%
+ggplot(aes(date, max, color = name, group = name)) +
+facet_grid(name~.) +
+geom_col() +
+theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+ylab("micrograms per cubic meter: daily maximum")
+dailymax %>%
+filter(grepl("Berkeley|Sebastopol|Napa|San Fran|Vacaville|Concord|San Rafael|Vallejo", name)) %>%
+mutate(date = as.Date(date, format = "%m/%d/%Y")) %>%
+ggplot(aes(date, max, color = name, group = name)) +
+facet_grid(name~.) +
+geom_col(fill=color) +
+theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+ylab("micrograms per cubic meter: daily maximum")
+dailymax %>%
+filter(grepl("Berkeley|Sebastopol|Napa|San Fran|Vacaville|Concord|San Rafael|Vallejo", name)) %>%
+mutate(date = as.Date(date, format = "%m/%d/%Y")) %>%
+ggplot(aes(date, max, color = name, group = name)) +
+facet_grid(name~.) +
+geom_col(aes(fill=color)) +
+theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+ylab("micrograms per cubic meter: daily maximum")
+dailymax %>%
+filter(grepl("Berkeley|Sebastopol|Napa|San Fran|Vacaville|Concord|San Rafael|Vallejo", name)) %>%
+mutate(date = as.Date(date, format = "%m/%d/%Y")) %>%
+ggplot(aes(date, max, color = name, group = name, fill = name)) +
+facet_grid(name~.) +
+geom_col() +
+theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+ylab("micrograms per cubic meter: daily maximum")
+dailymax %>%
+filter(grepl("Berkeley|Sebastopol|Napa|San Fran|Vacaville|Concord|San Rafael|Vallejo", name)) %>%
+mutate(date = as.Date(date, format = "%m/%d/%Y")) %>%
+ggplot(aes(date, max, color = "black", group = name, fill = name)) +
+facet_grid(name~.) +
+geom_col() +
+theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+ylab("micrograms per cubic meter: daily maximum")
+dailymax %>%
+filter(grepl("Berkeley|Sebastopol|Napa|San Fran|Vacaville|Concord|San Rafael|Vallejo", name)) %>%
+mutate(date = as.Date(date, format = "%m/%d/%Y")) %>%
+ggplot(aes(date, max, colur = "black", group = name, fill = name)) +
+facet_grid(name~.) +
+geom_col() +
+theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+ylab("micrograms per cubic meter: daily maximum")
+dailymax %>%
+filter(grepl("Berkeley|Sebastopol|Napa|San Fran|Vacaville|Concord|San Rafael|Vallejo", name)) %>%
+mutate(date = as.Date(date, format = "%m/%d/%Y")) %>%
+ggplot(aes(date, max, colour = "black", group = name, fill = name)) +
+facet_grid(name~.) +
+geom_col() +
+theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+ylab("micrograms per cubic meter: daily maximum")
+dailymax %>%
+filter(grepl("Berkeley|Sebastopol|Napa|San Fran|Vacaville|Concord|San Rafael|Vallejo", name)) %>%
+mutate(date = as.Date(date, format = "%m/%d/%Y")) %>%
+ggplot(aes(date, max, group = name, fill = name)) +
+facet_grid(name~.) +
+geom_col() +
+theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+ylab("micrograms per cubic meter: daily maximum")
+dailymax %>%
+filter(grepl("Berkeley|Sebastopol|Napa|San Fran|Vacaville|Concord|San Rafael|Vallejo", name)) %>%
+mutate(date = as.Date(date, format = "%m/%d/%Y")) %>%
+ggplot(aes(date, max, group = name, fill = name)) +
+facet_grid(name~.) +
+geom_col() +
+theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+ylab("micrograms per cubic meter: daily maximum")
+View(dailymax)
+tidy %>%
+group_by(name) %>%
+summarise(max = max(value))
+tidy %>%
+group_by(name) %>%
+filter(value<900) %>%
+summarise(max = max(value))
+tidy %>%
+group_by(name) %>%
+filter(value<900) %>%
+summarise(max = max(value), sum = sum(value))
+tidy %>%
+group_by(name) %>%
+filter(value<900) %>%
+summarise(max = max(value), sum = sum(value), tally = tally())
+tidy %>%
+group_by(name) %>%
+filter(value<900) %>%
+summarise(max = max(value), sum = sum(value), tally = count(value))
+tidy %>%
+group_by(name) %>%
+filter(value<900) %>%
+summarise(max = max(value), sum = sum(value), count = nrow(value))
+tidy %>%
+group_by(name) %>%
+filter(value<900) %>%
+summarise(max = max(value), sum = sum(value))
+tidy %>%
+group_by(name) %>%
+filter(value<900) %>%
+summarise(max = max(value), sum = sum(value), tally = tally(value))
+tidy %>%
+group_by(name) %>%
+filter(value<900) %>%
+summarise(max = max(value), sum = sum(value), count = n())
+tidy %>%
+group_by(name) %>%
+filter(value<900) %>%
+summarise(max = max(value), average = sum(value)/n())
+tidy %>%
+group_by(name) %>%
+filter(value<900) %>%
+summarise(max = max(value), count = n())
+View(tidy)
+30*24
+mutate(decimal_day = str_sub(date, 4)#%>%
+mutate(decimal_day = str_sub(date, 4) #%>%
+group_by(name) %>%
+mutate(decimal_day = str_sub(date, 4)
+summarise(max = max(value), count = n())
+filter(value<900) %>%
+tidy %>%
+tidy %>%
+group_by(name) %>%
+filter(value<900) %>%
+mutate(decimal_day = str_sub(date, 4))
+tidy %>%
+group_by(name) %>%
+filter(value<900) %>%
+mutate(decimal_day = str_sub(date, 4))
+tidy %>%
+group_by(name) %>%
+filter(value<900) %>%
+mutate(decimal_day = str_sub(date, 4, 4))
+tidy %>%
+group_by(name) %>%
+filter(value<900) %>%
+mutate(decimal_day = str_sub(date, 4, 4) + start_hour/24)
+tidy %>%
+group_by(name) %>%
+filter(value<900) %>%
+mutate(decimal_day = str_sub(date, 4, 4) + as.numeric(start_hour)/24)
+tidy %>%
+group_by(name) %>%
+filter(value<900) %>%
+mutate(decimal_day = as.numeric(str_sub(date, 4, 4)) + as.numeric(start_hour)/24)
+tidy %>%
+group_by(name) %>%
+filter(value<900) %>%
+mutate(decimal_day = as.numeric(str_sub(date, 4, 4)) + as.numeric(start_hour)/24) -> tidy
+tidy %>%
+ggplot(decimal_day, value) +
+geom_histogram()
+View(tidy)
+hist(tidy$decimal_day)
+tidy %>%
+group_by(name) %>%
+filter(value<900) %>%
+mutate(decimal_day = as.numeric(str_extract(date, "/.*/")) + as.numeric(start_hour)/24) -> tidy
+hist(tidy$decimal_day)
+tidy %>%
+ggplot(decimal_day, value) +
+geom_hist()
+View(tidy)
+str_extract(tidy$date, "/.*/")
+tidy %>%
+group_by(name) %>%
+filter(value<900) %>%
+mutate(decimal_day = as.numeric(str_sub(str_extract(date, "/.*/"),1,-1)) + as.numeric(start_hour)/24) -> tidy
+tidy %>%
+group_by(name) %>%
+filter(value<900) %>%
+mutate(decimal_day = as.numeric(str_sub(str_extract(date, "/.*/"),2,-1)) + as.numeric(start_hour)/24) -> tidy
+tidy
+str_sub(str_extract(tidy$date, "/.*/"),2,-1)
+tidy %>%
+group_by(name) %>%
+filter(value<900) %>%
+mutate(decimal_day = as.numeric(str_sub(str_extract(date, "/.*/"),2,-2)) + as.numeric(start_hour)/24) -> tidy
+tidy %>%
+ggplot(decimal_day, value) +
+geom_hist()
+tidy
+max(tidy$decimal_day)
+tidy %>%
+group_by(name) %>%
+filter(value<900, str_sub(date,1,2)=="10") %>%
+mutate(decimal_day = as.numeric(str_sub(str_extract(date, "/.*/"),2,-2)) + as.numeric(start_hour)/24) -> tidy
+unique(tidy$date)
+tidy %>%
+group_by(name) %>%
+filter(value<900, str_sub(date,1,2)=="10") %>%
+mutate(decimal_day = as.numeric(str_sub(str_extract(date, "/.*/"),2,-2)) + as.numeric(start_hour)/24) %>%
+distinct(date) #-> tidy
+tidy %>%
+group_by(name) %>%
+filter(value<900, str_sub(date,1,2)=="10") %>%
+mutate(decimal_day = as.numeric(str_sub(str_extract(date, "/.*/"),2,-2)) + as.numeric(start_hour)/24) %>%
+ungroup() %>%
+distinct(date) #-> tidy
+tidy %>%
+group_by(name) %>%
+filter(value<900, str_sub(date,1,2)=="10") %>%
+mutate(decimal_day = as.numeric(str_sub(str_extract(date, "/.*/"),2,-2)) + as.numeric(start_hour)/24) %>%
+ungroup() -> tidy
+tidy %>%
+ggplot(decimal_day, value) +
+geom_hist()
+tidy %>%
+ggplot(decimal_day, value) +
+geom_line()
+tidy %>%
+ggplot(decimal_day, value) +
+geom_line()
+class(tidy$decimal_day)
+tidy %>%
+group_by(name) %>%
+filter(value<900, str_sub(date,1,2)=="10") %>%
+mutate(decimal_day = as.numeric(str_sub(str_extract(date, "/.*/"),2,-2)) + as.numeric(start_hour)/24) %>%
+ungroup() %>%
+select(date, start_hour, value, units, name, decimal_day)-> tidy
+tidy %>%
+ggplot(decimal_day, value) +
+geom_line()
+tidy %>%
+group_by(name) %>%
+filter(value<900, str_sub(date,1,2)=="10") %>%
+mutate(decimalday = as.numeric(str_sub(str_extract(date, "/.*/"),2,-2)) + as.numeric(start_hour)/24) %>%
+ungroup() %>%
+select(date, start_hour, value, units, name, decimalday)-> tidy
+library(tidyverse)
+library(zoo)
+data<-as.tibble(read.csv("data/alldata.csv"))
+#Are latitudes and longitudes consistent for data from a single station?
+data %>%
+group_by(name) %>%
+summarise(maxlat=max(latitude), minlat=min(latitude)) %>%
+mutate(equal=maxlat==minlat) %>%
+distinct(equal)
+#Yes
+#Are there any rows empty?
+data %>%
+mutate(missingdata = is.na(value)) %>%
+distinct(missingdata)
+#No
+#What stations are within .6 degree Lat/Long of Napa?
+data %>%
+filter(grepl("Napa",name)) %>%
+distinct(latitude,longitude) -> napaloc
+data %>%
+filter(abs(latitude-napaloc$latitude)<.6,
+abs(longitude-napaloc$longitude)<.6) %>%
+distinct(name) -> nearby
+#Oakland, Berkeley, Concord, San Pablo, San Rafael, Vallejo, Vacaville, Sebastopol (and Napa)
+#Let's cut it to those stations for tidyness
+data %>%
+filter(name %in% nearby$name) -> tidy
+#Let's graph the daily maximum values over October for these stations
+tidy %>%
+group_by(name, date) %>%
+summarise(max = max(value)) %>%
+filter(max<900) %>%
+ungroup() -> dailymax
+dailymax %>%
+filter(grepl("Berkeley|Sebastopol|Napa|San Fran|Vacaville|Concord|San Rafael|Vallejo", name)) %>%
+mutate(date = as.Date(date, format = "%m/%d/%Y")) %>%
+ggplot(aes(date, max, group = name, fill = name)) +
+facet_grid(name~.) +
+geom_col() +
+theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+ylab("micrograms per cubic meter: daily maximum")
+tidy %>%
+group_by(name) %>%
+filter(value<900, str_sub(date,1,2)=="10") %>%
+mutate(decimalday = as.numeric(str_sub(str_extract(date, "/.*/"),2,-2)) + as.numeric(start_hour)/24) %>%
+ungroup() %>%
+select(date, start_hour, value, units, name, decimalday)-> tidy
+tidy %>%
+ggplot(decimalday, value) +
+geom_line()
+tidy %>%
+filter(grepl("Berkeley|Sebastopol|Napa|San Fran|Vacaville|Concord|San Rafael|Vallejo", name), decimalday>7, decimalday<20)
+tidy %>%
+filter(grepl("Berkeley|Sebastopol|Napa|San Fran|Vacaville|Concord|San Rafael|Vallejo", name), decimalday>7, decimalday<20) %>%
+group_by(name) %>%
+summarise(max = max(value), n = n())
+13*24
+tidy %>%
+filter(grepl("Berkeley|Sebastopol|Napa|San Fran|Vacaville|Concord|San Rafael|Vallejo", name), decimalday>7, decimalday<20) %>%
+hist(decimalday)
+tidy %>%
+filter(grepl("Berkeley|Sebastopol|Napa|San Fran|Vacaville|Concord|San Rafael|Vallejo", name), decimalday>7, decimalday<20) -> ofinterest
+hist(ofinterest$decima)
+hist(ofinterest$decimalday)
+hist(ofinterest$decimalday, breaks = 1000)
+hist(ofinterest$decimalday, breaks = 13*48)
+hist(ofinterest$decimalday, breaks = 13*100)
+tidy %>%
+filter(grepl("Berkeley|Sebastopol|Napa|San Fran|Vacaville|Concord|San Rafael|Vallejo", name), decimalday>7, decimalday<20) %>%
+group_by(name) %>%
+summarize(max = max(value), avg = mean(value))
+#Now to calculate total max and average for each station
+tidy %>%
+group_by(name) %>%
+filter(value<900, str_sub(date,1,2)=="10") %>%
+mutate(decimalday = as.numeric(str_sub(str_extract(date, "/.*/"),2,-2)) + as.numeric(start_hour)/24) %>%
+ungroup() %>%
+select(date, start_hour, value, units, name, decimalday)-> tidy
+tidy %>%
+filter(grepl("Berkeley|Sebastopol|Napa|San Fran|Vacaville|Concord|San Rafael|Vallejo", name), decimalday>7, decimalday<20) %>%
+group_by(name) %>%
+summarize(max = max(value), avg = mean(value)) -> stats
+write.csv(stats, "pm_2.5_ug_per_m3_10-7_thru_10-20.csv")
+plot(x = data$longitude, y = data$latitude)
+plot(x = tidy$longitude, y = tidy$latitude)
+library(tidyverse)
+library(zoo)
+data<-as.tibble(read.csv("data/alldata.csv"))
+#Are latitudes and longitudes consistent for data from a single station?
+data %>%
+group_by(name) %>%
+summarise(maxlat=max(latitude), minlat=min(latitude)) %>%
+mutate(equal=maxlat==minlat) %>%
+distinct(equal)
+#Yes
+#Are there any rows empty?
+data %>%
+mutate(missingdata = is.na(value)) %>%
+distinct(missingdata)
+#No
+#What stations are within .6 degree Lat/Long of Napa?
+data %>%
+filter(grepl("Napa",name)) %>%
+distinct(latitude,longitude) -> napaloc
+data %>%
+filter(abs(latitude-napaloc$latitude)<.6,
+abs(longitude-napaloc$longitude)<.6) %>%
+distinct(name) -> nearby
+#Oakland, Berkeley, Concord, San Pablo, San Rafael, Vallejo, Vacaville, Sebastopol (and Napa)
+#Let's cut it to those stations for tidyness
+data %>%
+filter(name %in% nearby$name) -> tidy
+#Let's graph the daily maximum values over October for these stations
+tidy %>%
+group_by(name, date) %>%
+summarise(max = max(value)) %>%
+filter(max<900) %>%
+ungroup() -> dailymax
+dailymax %>%
+filter(grepl("Berkeley|Sebastopol|Napa|San Fran|Vacaville|Concord|San Rafael|Vallejo", name)) %>%
+mutate(date = as.Date(date, format = "%m/%d/%Y")) %>%
+ggplot(aes(date, max, group = name, fill = name)) +
+facet_grid(name~.) +
+geom_col() +
+theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+ylab("micrograms per cubic meter: daily maximum")
+#Now to calculate total max and average for each station
+tidy %>%
+group_by(name) %>%
+filter(value<900, str_sub(date,1,2)=="10") %>%
+mutate(decimalday = as.numeric(str_sub(str_extract(date, "/.*/"),2,-2)) + as.numeric(start_hour)/24) %>%
+ungroup() %>%
+select(date, start_hour, value, units, name, decimalday, latitude, longitude)-> tidy
+tidy %>%
+filter(grepl("Berkeley|Sebastopol|Napa|San Fran|Vacaville|Concord|San Rafael|Vallejo", name), decimalday>7, decimalday<20) %>%
+group_by(name) %>%
+summarize(max = max(value), avg = mean(value)) -> stats
+write.csv(stats, "pm_2.5_ug_per_m3_10-7_thru_10-20.csv")
+#A map of the sites
+plot(x = tidy$longitude, y = tidy$latitude)
+labels(tidy$name)
+#A map of the sites
+plot(x = tidy$longitude, y = tidy$latitude)
+labels(tidy$name)
+plot(x = tidy$longitude, y = tidy$latitude, labels = tidy$name)
+plot(x = tidy$longitude, y = tidy$latitude, labels = tidy$names)
+plot(x = tidy$longitude, y = tidy$latitude, labels = tidy$name)
+tidy %>%
+distinct(latitude) %>%
+ggplot(aes(longitude,latitude)) +
+geom_point()
+tidy %>%
+distinct(latitude,longitude,name) %>%
+ggplot(aes(longitude,latitude)) +
+geom_point()
+tidy %>%
+distinct(latitude,longitude,name) %>%
+ggplot(aes(longitude,latitude, label = name)) +
+geom_point() +
+geom_label()
+tidy %>%
+distinct(latitude,longitude,name) %>%
+ggplot(aes(longitude,latitude, label = name)) +
+geom_point() +
+geom_label() +
+coord_equal()
+tidy %>%
+filter(grepl("Berkeley|Sebastopol|Napa|San Fran|Vacaville|Concord|San Rafael|Vallejo", name), decimalday>7, decimalday<20) %>%
+group_by(name) %>%
+summarize(max = max(value), avg = mean(value), latitude = mean(latitude), longitude = mean(longitude)) -> stats
+stats %>%
+distinct(latitude,longitude,name) %>%
+ggplot(aes(longitude,latitude, label = name)) +
+geom_point() +
+geom_label() +
+coord_equal()
+stats %>%
+distinct(latitude,longitude,name) %>%
+ggplot(aes(longitude,latitude, label = name)) +
+geom_point() +
+geom_text() +
+coord_equal()
+stats %>%
+distinct(latitude,longitude,name) %>%
+ggplot(aes(longitude,latitude, label = name)) +
+geom_point() +
+geom_text(hjust = "inward", vjust = "inward") +
+coord_equal()
+library(maps)
+california <- map_data(usa, region = "California")
+california <- map_data(map = state, region = "California")
+california <- map_data(region = "California")
+map(database = "world")
+california <- map_data(map = "usa", region = "California")
+california <- map_data(map = "usa", region)
+california <- map_data(map = "states", region = "California")
+map <- map_data(map = "states")
+map(database = "usa")
+map(database = "states")
+map(database = "state")
+map <- map_data(map = "state")
+stats %>%
+distinct(latitude,longitude,name) %>%
+ggplot(aes(longitude,latitude, label = name)) +
+geom_point() +
+geom_text(hjust = "inward", vjust = "inward") +
+coord_equal() +
+geom_polygon(data = map, aes(x=long,y=lat))
+stats %>%
+distinct(latitude,longitude,name) %>%
+ggplot(aes(longitude,latitude, label = name)) +
+geom_point() +
+geom_text(hjust = "inward", vjust = "inward") +
+coord_equal() #+
+stats %>%
+distinct(latitude,longitude,name) %>%
+ggplot(aes(longitude,latitude, label = name)) +
+geom_point() +
+geom_text(hjust = "inward", vjust = "inward") +
+coord_equal() +
+geom_polygon(data = map, aes(x=long,y=lat))
+stats %>%
+distinct(latitude,longitude,name) %>%
+ggplot(aes(longitude,latitude, label = name)) +
+geom_point() +
+geom_text(hjust = "inward", vjust = "inward") +
+coord_equal()
+map %>%
+ggplot(long, lat) +
+geom_line()
+map
+map("state")
+stats %>%
+distinct(latitude,longitude,name) %>%
+ggplot(aes(longitude,latitude, label = name)) +
+geom_point() +
+geom_text(hjust = "inward", vjust = "inward") +
+coord_equal()
+rm(list = ls())

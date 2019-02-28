@@ -1,0 +1,79 @@
+<VRTDataset rasterXSize="511" rasterYSize="432">
+  <SRS>GEOGCS["NAD83",DATUM["North_American_Datum_1983",SPHEROID["GRS 1980",6378137,298.2572221010042,AUTHORITY["EPSG","7019"]],AUTHORITY["EPSG","6269"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4269"]]</SRS>
+  <GeoTransform>-1.2327615000000000e+002, 2.0000000000000000e-003, 0.0000000000000000e+000, 3.8767849999999996e+001, 0.0000000000000000e+000,-2.0000000000000000e-003</GeoTransform>
+  <VRTRasterBand dataType="Float64" band="1">
+    <Metadata>
+      <MDI key="STATISTICS_MAXIMUM">0</MDI>
+      <MDI key="STATISTICS_MEAN">-8.2289537580633</MDI>
+      <MDI key="STATISTICS_MINIMUM">-16</MDI>
+      <MDI key="STATISTICS_STDDEV">7.0041767517023</MDI>
+    </Metadata>
+    <ColorInterp>Gray</ColorInterp>
+    <Histograms>
+      <HistItem>
+        <HistMin>-16.008</HistMin>
+        <HistMax>0.008</HistMax>
+        <BucketCount>1000</BucketCount>
+        <IncludeOutOfRange>0</IncludeOutOfRange>
+        <Approximate>0</Approximate>
+        <HistCounts>32969|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|67520|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|27767|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|1057|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|91439</HistCounts>
+      </HistItem>
+    </Histograms>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">sh11</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="104" RasterYSize="62" DataType="Float64" BlockXSize="104" BlockYSize="9" />
+      <SrcRect xOff="0" yOff="0" xSize="104" ySize="62" />
+      <DstRect xOff="357.054999999995" yOff="86.0149999999997" xSize="104" ySize="62" />
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">sh10</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="313" RasterYSize="129" DataType="Float64" BlockXSize="313" BlockYSize="3" />
+      <SrcRect xOff="0" yOff="0" xSize="313" ySize="129" />
+      <DstRect xOff="196.204999999999" yOff="111.49" xSize="313" ySize="129" />
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">sh09</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="67" RasterYSize="24" DataType="Float64" BlockXSize="67" BlockYSize="15" />
+      <SrcRect xOff="0" yOff="0" xSize="67" ySize="24" />
+      <DstRect xOff="201.884999999997" yOff="126.684999999998" xSize="67" ySize="24" />
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">sh06</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="266" RasterYSize="305" DataType="Float64" BlockXSize="266" BlockYSize="3" />
+      <SrcRect xOff="0" yOff="0" xSize="266" ySize="305" />
+      <DstRect xOff="245.069999999998" yOff="126.684999999998" xSize="266" ySize="305" />
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">sh05</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="238" RasterYSize="168" DataType="Float64" BlockXSize="238" BlockYSize="4" />
+      <SrcRect xOff="0" yOff="0" xSize="238" ySize="168" />
+      <DstRect xOff="262.194999999998" yOff="126.684999999998" xSize="238" ySize="168" />
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">sh03</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="381" RasterYSize="256" DataType="Float64" BlockXSize="381" BlockYSize="2" />
+      <SrcRect xOff="0" yOff="0" xSize="381" ySize="256" />
+      <DstRect xOff="0" yOff="0" xSize="381" ySize="256" />
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">sh02</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="510" RasterYSize="384" DataType="Float64" BlockXSize="510" BlockYSize="2" />
+      <SrcRect xOff="0" yOff="0" xSize="510" ySize="384" />
+      <DstRect xOff="0.914999999999111" yOff="47.3699999999972" xSize="510" ySize="384" />
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">sh01</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="255" RasterYSize="305" DataType="Float64" BlockXSize="255" BlockYSize="4" />
+      <SrcRect xOff="0" yOff="0" xSize="255" ySize="305" />
+      <DstRect xOff="256.450000000001" yOff="126.684999999998" xSize="255" ySize="305" />
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>

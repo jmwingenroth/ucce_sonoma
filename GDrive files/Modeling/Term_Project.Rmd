@@ -1,0 +1,185 @@
+---
+title: "Term project: Analyzing agricultural impacts of Santa Rosa fires"
+author: "Jordan Wingenroth"
+date: "November 13, 2017"
+output: html_document
+---
+
+Import station and PM 2.5 data:
+
+```{r}
+
+setwd("C:/Users/Jordan Wingenroth/Google Drive/Grad school/September 2017-/Sustainability & Society (ESPM 261)/Term project")
+
+require(tidyverse)
+require(sp)
+require(spacetime)
+require(ggplot2)
+require(RcppRoll)
+require(zoo)
+require(maps)
+require(geomapdata)
+require(tibble)
+require(rgdal)
+require(maptools)
+require(ggmap)
+require(gstat)
+require(raster)
+
+norcal <- read_csv("NORCAL_OCT_PM25_ALL.csv")
+centcal <- read_csv("CENTCAL_OCT_PM25_ALL.csv")
+socal <- read_csv("SOCAL_OCT_PM25_ALL.csv")
+
+norcal <- head(norcal, -11)
+centcal <- head(centcal, -11)
+socal <- head(socal, -11)
+
+tail(norcal)
+tail(centcal)
+tail(socal)
+
+alldata <- rbind(norcal, centcal, socal) %>%
+  arrange(latitude)
+
+rm(list = c("norcal", "centcal", "socal"))
+```
+
+Prep time data:
+
+```{r}
+
+alldata$time<-strptime(alldata$date, "%Y-%m-%d")+3600*alldata$start_hour
+timedata <- strptime("10/1/17", "%m/%d/%y")+(0:767)*3600
+timedata <- as_data_frame(timedata)
+
+```
+
+Map PM 2.5 measurements to time values:
+
+```{r}
+
+indices <- list()
+
+for (i in 1:nrow(timedata)){
+  indices[i]<-list(which(alldata$time==timedata$value[i]))
+}
+
+timedata[unique(alldata$name)]<-NA
+
+for (i in unique(alldata$name)){
+  temp <- filter(alldata, name==i)
+  for (j in 1:nrow(temp)){
+    timedata[timedata$value==temp$time[j],i] <- temp$value[j]
+  }
+}
+
+rm(list=c("indices","temp","i","j"))
+
+```
+
+Plot heatmap and histogram of raw data:
+
+```{r fig.width=12, fig.height=14}
+timedata %>%
+  gather(place, pm25, -value) %>%
+  mutate(place = factor(place, levels = unique(place))) %>%
+  
+  ggplot(aes(place, value)) +
+  geom_raster(aes(fill = pm25,base = 10)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+timedata %>%
+  gather(place, pm25, -value) %>%
+  
+  ggplot(aes(x=pm25)) +
+  geom_histogram() +
+  scale_y_log10()
+
+```
+
+Tidy data:
+
+```{r fig.width=12, fig.height=14}
+
+timedata %>%
+  
+  #replace malfunctions with NA
+  replace(timedata<0|timedata>900&timedata<1200, NA) %>% 
+  
+  #remove less dependable sensors
+  .[(names(which(lapply(.[(8*24):(14*24),], function(x) sum(is.na(x))/768)<.1)))] -> timedata
+
+  
+  
+
+```
+
+
+Compute rolling means and maxima:
+
+```{r}
+
+
+print("#The fraction of NAs in the raw data")
+sum(is.na(timedata))/prod(dim(timedata))
+
+mean12hr <- timedata
+mean12hr[-1] <- roll_mean(as.matrix(timedata[-1]), n = 12, fill = NA, na.rm = T)
+
+print("#The fraction of NAs in the 12-hr rolling mean data")
+sum(is.na(mean12hr))/prod(dim(mean12hr))
+
+max12hr <- timedata
+max12hr[-1] <- roll_max(as.matrix(timedata[-1]), n = 12, fill = NA, na.rm = T)
+
+```
+
+Plot heatmap and histogram of rolling mean data:
+
+```{r fig.width=12, fig.height=14}
+max12hr %>%
+  gather(place, pm25, -value) %>%
+  mutate(place = factor(place, levels = unique(place))) %>%
+  
+  ggplot(aes(place, value)) +
+  geom_raster(aes(fill = pm25,base = 10)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+max12hr %>%
+  gather(place, pm25, -value) %>%
+  
+  ggplot(aes(x=pm25)) +
+  geom_histogram() +
+  scale_y_log10()
+
+mean12hr %>%
+  gather(place, pm25, -value) %>%
+  mutate(place = factor(place, levels = unique(place))) %>%
+  
+  ggplot(aes(place, value)) +
+  geom_raster(aes(fill = pm25,base = 10)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+mean12hr %>%
+  gather(place, pm25, -value) %>%
+  
+  ggplot(aes(x=pm25)) +
+  geom_histogram() +
+  scale_y_log10()
+
+```
+
+Set up spatial data:
+
+```{r}
+
+gather(timedata, place, pm25, -value) %>%
+  left_join(gather(mean12hr, place, mean12hr, -value)) %>%
+  left_join(gather(max12hr, place, max12hr, -value)) %>%
+  left_join(distinct(raw, name, latitude, longitude), by = c("place"="name")) -> modeldata
+
+```
+
+
+
+
